@@ -1,0 +1,110 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.min.js'></script>
+  <title>Report</title>
+  <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      .Libre{ 
+        background-color: darkseagreen;
+      }
+    </style>
+</head>
+<body>
+  <header class="w-full mb-3">
+    <div class="flex justify-between">
+      <div class="flex gap-3 items-center">
+        <div>
+          <img src="data:image/png;base64,*hcg*" alt="" class="h-[1.5cm]">
+        </div>
+        <div>
+          <div class="flex flex-col uppercase">
+            <span class="text-xl">Hospital Civil de Guadalajara</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex flex-col text-end">
+          <p class="font-bold">Fecha</p>
+          <p class="">{{date}}</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex justify-center mb-5">
+    <h1 class="font-bold text-2xl"> {{title}}</h1>
+  </div>
+
+  {{#if shouldShowFilters}}
+    <section class="mb-3 space-y-3">
+      <h3>Lista de filtros utilizados para generar el reporte: </h3>
+      <table class='w-full border rounded-lg border-zinc-300 overflow-hidden'>
+        <thead class="bg-zinc-300">
+          <tr>
+            <th class="border border-zinc-300 py-1 px-1 text-center">
+              Columna
+            </th>
+            <th class="border border-zinc-300 py-1 px-1 text-center">
+              Tipo de filtro
+            </th>
+            <th class="border border-zinc-300 py-1 px-1 text-center">
+              Valor
+            </th>
+          </tr>
+        </thead>
+        <tbody class="">
+           {{#each filters}}
+            <tr>
+              <td class="border border-zinc-300 py-1 px-1 text-center">
+                {{key}}
+              </td>
+              <td class="border border-zinc-300 py-1 px-1 text-center">
+                {{filterType}}
+              </td>
+              <td class="border border-zinc-300 py-1 px-1 text-center">
+                {{value}}
+              </td>
+            </tr>
+           {{/each}}
+        </tbody>
+      </table>
+    </section>
+  {{/if}}
+
+  <section class="grid grid-cols-2 gap-3 mb-3">
+    {{#each chartImages}}
+      <img src="{{image}}" alt="chart" class="{{css}}"/>
+    {{/each}}
+  </section>
+  
+  <section class="space-y-4">
+    {{#each servicios}}
+      <h2 class="font-bold text-xl">{{servicio}}</h2>
+      <table class='w-full border rounded-lg border-zinc-300 overflow-hidden'>
+        <thead class="bg-zinc-300">
+          <tr>
+            *columns*
+          </tr>
+        </thead>
+        <tbody class="text-normal font-normal">
+            {{#each rows}}
+            <tr>
+              *replacedColumns*
+            </tr>
+            {{/each}}
+        </tbody>
+      </table>
+      <div style='page-break-after: always;'>
+      </div>
+    {{/each}}
+  </section>
+
+</body>
+</html>

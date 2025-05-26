@@ -1,0 +1,43 @@
+{
+	"name": "panacea-server",
+	"version": "0.0.1",
+	"description": "",
+	"main": "./src/server.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"_moduleAliases": {
+		"@": "dist"
+	},
+	"author": "Julio Mariscal",
+	"license": "ISC",
+	"dependencies": {
+		"@duckdb/node-api": "^1.2.2-alpha.18",
+		"@jsreport/nodejs-client": "^4.0.5",
+		"chartjs-node-canvas": "^5.0.0",
+		"cors": "^2.8.5",
+		"crypto-js": "^4.2.0",
+		"dotenv": "^16.5.0",
+		"express": "^5.1.0",
+		"express-fileupload": "^1.5.1",
+		"jsonwebtoken": "^9.0.2",
+		"module-alias": "^2.2.3",
+		"node-cron": "^4.0.5",
+		"node-fetch": "^3.3.2",
+		"nodemailer": "^7.0.3",
+		"sequelize": "^6.37.7",
+		"sequelize-auto": "^0.8.8",
+		"socket.io": "^4.8.1",
+		"tedious": "^18.6.1"
+	},
+	"devDependencies": {
+		"@types/crypto-js": "^4.2.2",
+		"@types/express": "^5.0.1",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/jsonwebtoken": "^9.0.9",
+		"@types/node": "^22.15.17",
+		"@types/nodemailer": "^6.4.17",
+		"sequelize-cli": "^6.6.3",
+		"typescript": "^5.8.3"
+	}
+}
