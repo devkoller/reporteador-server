@@ -20,7 +20,7 @@ cron.schedule(
 	}
 )
 
-cron.schedule("42 9 * * *", async () => {
+cron.schedule("0 8 * * *", async () => {
 	let body = {
 		columns: [
 			{ accessorKey: "cod_cama", header: "Cama" },
