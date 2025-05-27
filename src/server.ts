@@ -8,19 +8,7 @@ dotenv.config()
 import app from "./app"
 import { environment, cgi } from "@/config"
 
-cron.schedule(
-	"30 8 * * *",
-	async () => {
-		// await dataController.vCitadosGenerar()
-		// await dataController.vIngresosAdministrativosGenerar()
-		// await dataController.vIngresosEgresosAdministrativosGenerar()
-	},
-	{
-		timezone: "America/Mexico_City",
-	}
-)
-
-cron.schedule("42 9 * * *", async () => {
+cron.schedule("0 8 * * *", async () => {
 	let body = {
 		columns: [
 			{ accessorKey: "cod_cama", header: "Cama" },
@@ -106,7 +94,7 @@ cron.schedule("42 9 * * *", async () => {
 			},
 		],
 	}
-	let pdf64 = await dataController.pdfReport({
+	let results = await dataController.pdfReport({
 		query: {},
 		params: {},
 		body,
@@ -118,6 +106,7 @@ cron.schedule("42 9 * * *", async () => {
 		"julio.mariscal@hcg.gob.mx",
 		"rcvazquez@hcg.gob.mx",
 		"rosaimeldahernandezramirez@hcg.gob.mx",
+		"rduran@hcg.gob.mx",
 	]
 
 	const emailOptions = {
@@ -128,9 +117,16 @@ cron.schedule("42 9 * * *", async () => {
 		attachments: [
 			{
 				filename: "reporte.pdf",
-				content: pdf64.data,
+				content: results.data.pdf,
 				encoding: "base64",
 				contentType: "application/pdf",
+			},
+			{
+				filename: "reporte.xlsx",
+				content: results.data.excel,
+				encoding: "base64",
+				contentType:
+					"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			},
 		],
 	}

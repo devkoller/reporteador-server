@@ -1,0 +1,69 @@
+
+<html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://cdn.tailwindcss.com"></script>
+      <title>Report</title>
+      <style>
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          .Libre{ 
+            background-color: darkseagreen;
+          }
+        </style>
+    </head>
+    <body>
+        <table name="Sales-Detail">
+            <tbody class="w-full mb-3">
+                <tr>
+                  <td>
+                    Hospital Civil de Guadalajara
+                  </td>
+                  <td>
+                    {{date}}
+                  </td>
+                </tr>
+            </tbody>
+            <tbody class="head">
+              <tr>
+                <th class="border border-zinc-300 py-1 px-1 text-center">
+                  Columna
+                </th>
+                <th class="border border-zinc-300 py-1 px-1 text-center">
+                  Tipo de filtro
+                </th>
+                <th class="border border-zinc-300 py-1 px-1 text-center">
+                  Valor
+                </th>
+              </tr>
+              {{#each filters}}
+                <tr>
+                  <td class="border border-zinc-300 py-1 px-1 text-center">
+                    {{key}}
+                  </td>
+                  <td class="border border-zinc-300 py-1 px-1 text-center">
+                    {{filterType}}
+                  </td>
+                  <td class="border border-zinc-300 py-1 px-1 text-center">
+                    {{value}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+            <tbody class="detail">
+              <tr>
+                *columns*
+              </tr>
+              {{#each rows}}
+              <tr>
+                *replacedColumns*
+              </tr>
+              {{/each}}
+            </tbody>
+        </table>
+    </body>
+</html>

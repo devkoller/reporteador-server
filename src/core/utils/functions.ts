@@ -43,6 +43,34 @@ export function helpers() {
 	return `
       const jsreport = require('jsreport-proxy')
       const qri = await jsreport.npm.require('qr-image@3.2.0')
+      const moment = require('moment')
+      const rowOffset = 6
+
+      function nowStr () {
+          return moment().format('YYYY-MM-DD')
+      }
+
+      function generateEmptyCell (repeat, className) {
+          const cells = []
+
+          for (let i = 0; i < repeat; i++) {
+              cells.push('<td class="empty-cell"></td>')
+          }
+
+          return new Handlebars.SafeString(cells.join(''))
+      }
+
+      function oddClassName (index) {
+          return (index + 1) % 2 !== 0 ? 'odd' : ''
+      }
+
+      function sum (a, b) {
+          return a + b
+      }
+
+      function getDetailRowIndex (index) {
+          return (index + 1) + rowOffset
+      }
   
       async function barcode(text) {
           const png = qri.imageSync(text, { type: 'png' }).toString('base64')

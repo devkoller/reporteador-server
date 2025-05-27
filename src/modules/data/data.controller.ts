@@ -498,14 +498,19 @@ class Data {
 
 			const replacedColumnsString = columns
 				.map((col: any) => {
-					return `<th class="border border-zinc-300 py-1 px-1 text-center font-normal {{${col.accessorKey}}}">
+					return `<td class="border border-zinc-300 py-1 px-1 text-center font-normal {{${col.accessorKey}}}">
           {{formatText ${col.accessorKey}}}
-          </th>`
+          </td>`
 				})
 				.join("\n")
 
 			const main = fs.readFileSync(
 				path.join(__dirname, "../../../src/reports/html/report.html"),
+				"utf8"
+			)
+
+			const mainExcel = fs.readFileSync(
+				path.join(__dirname, "../../../src/reports/html/reportToExcel.html"),
 				"utf8"
 			)
 
@@ -605,6 +610,11 @@ class Data {
 				.replace("*replacedColumns*", replacedColumnsString)
 				.replace("*hcg*", logo.toString("base64"))
 
+			const htmlExcel = mainExcel
+				.replace("*columns*", columnsString)
+				.replace("*replacedColumns*", replacedColumnsString)
+				.replace("*hcg*", logo.toString("base64"))
+
 			const reportStream = await client
 				.render({
 					template: {
@@ -639,7 +649,35 @@ class Data {
 					)
 				})
 
+			const reportExcelStream = await client
+				.render({
+					template: {
+						content: htmlExcel,
+						engine: "handlebars",
+						recipe: "html-to-xlsx",
+						helpers: helpers(),
+						chrome: {},
+					},
+					data: {
+						title,
+						date: new Date().toLocaleDateString("es-ES", {
+							day: "2-digit",
+							month: "2-digit",
+							year: "numeric",
+						}),
+						rows: filteredData,
+						...filteredDataString,
+						chartImages,
+					},
+				})
+				.catch((error: { message: string | undefined }) => {
+					throw new Error(
+						error instanceof Error ? error.message : String(error)
+					)
+				})
+
 			const chunks: any = []
+			const chunksExcel: any = []
 
 			let base64 = await new Promise((resolve, reject) => {
 				reportStream.on("data", (chunk: any) => chunks.push(chunk))
@@ -649,6 +687,16 @@ class Data {
 					resolve(base64)
 				})
 				reportStream.on("error", reject)
+			})
+
+			let base64Excel = await new Promise((resolve, reject) => {
+				reportExcelStream.on("data", (chunk: any) => chunksExcel.push(chunk))
+				reportExcelStream.on("end", () => {
+					const buffer = Buffer.concat(chunksExcel)
+					const base64 = buffer.toString("base64")
+					resolve(base64)
+				})
+				reportExcelStream.on("error", reject)
 			})
 
 			// const reportKey = type as keyof typeof functionsDataReports
@@ -661,7 +709,10 @@ class Data {
 			return {
 				status: 200,
 				message: "Datas read successfully",
-				data: base64,
+				data: {
+					pdf: base64,
+					excel: base64Excel,
+				},
 			}
 		} catch (error) {
 			throw new Error(error instanceof Error ? error.message : String(error))
