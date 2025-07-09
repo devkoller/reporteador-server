@@ -57,6 +57,14 @@ router.get("/vPenalizaTodos", [], (request: Request, response: Response) => {
 	})
 })
 
+router.get("/vIncumplimientos", [], (request: Request, response: Response) => {
+	callback({
+		request,
+		response,
+		callback: Data.vIncumplimientos,
+	})
+})
+
 router.post("/report/pdf", [], (request: Request, response: Response) => {
 	callback({
 		request,

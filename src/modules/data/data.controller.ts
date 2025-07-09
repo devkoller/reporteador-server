@@ -29,6 +29,7 @@ class Data {
 		this.vUrgencias = this.vUrgencias.bind(this)
 		this.vProductividad = this.vProductividad.bind(this)
 		this.vPenalizaTodos = this.vPenalizaTodos.bind(this)
+		this.vIncumplimientos = this.vIncumplimientos.bind(this)
 		this.pdfReport = this.pdfReport.bind(this)
 		this.getData = this.getData.bind(this)
 	}
@@ -494,6 +495,76 @@ class Data {
 			console.time("vPenalizaTodos")
 			const data = await DataService.read(queryString)
 			console.timeEnd("vPenalizaTodos")
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async vIncumplimientos({ query, params }: functionProps) {
+		try {
+			// if (!query) {
+			// 	throw new Error("Query is required")
+			// }
+			// const { start, end } = query
+			const queryString = `
+      SELECT TOP (1000) [no_orden]
+            ,[partida]
+            ,[num_licitacion]
+            ,[unidad_hosp_nombre]
+            ,[almacen_deno]
+            ,[total_ord]
+            ,[incumplimiento_pk]
+            ,[fecha]
+            ,[referencia_pk]
+            ,[tipo_origen_pk]
+            ,[fecha_limite]
+            ,[cantidad_incumple]
+            ,[estado]
+            ,[ano]
+            ,[proveedo_pk]
+            ,[penalizacion_detalle_pk]
+            ,[monto_incumple]
+            ,[precio]
+            ,[observaciones]
+            ,[motivo_cancelacion_pk]
+            ,[mov_fecha_con]
+            ,[mov_almacen_linpk]
+            ,[mov_cantidad]
+            ,[ordenpk]
+            ,[retraso]
+            ,[porcentaje]
+            ,[mov_alma_linpk]
+            ,[articulo]
+            ,[proveedo_nom]
+            ,[uh]
+            ,[cod_articulo]
+            ,[observacionesorden]
+            ,[usuario]
+            ,[idprorroga]
+            ,[aplicado]
+            ,[id_incumple]
+            ,[Expr1]
+            ,[estado2]
+            ,[tipo_origen_pk_2]
+            ,[cod_bar_mc_pr]
+            ,[factura]
+        FROM [Reportes].[dbo].[vIncumplimientosTodos]
+        order by fecha desc
+      `
+
+			// const replacements = {
+			// 	start,
+			// 	end,
+			// }
+			console.time("vIncumplimientos")
+			const data = await DataService.read(queryString)
+			console.timeEnd("vIncumplimientos")
 
 			return {
 				status: 200,
