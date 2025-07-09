@@ -28,6 +28,7 @@ class Data {
 		this.vCirugias = this.vCirugias.bind(this)
 		this.vUrgencias = this.vUrgencias.bind(this)
 		this.vProductividad = this.vProductividad.bind(this)
+		this.vPenalizaTodos = this.vPenalizaTodos.bind(this)
 		this.pdfReport = this.pdfReport.bind(this)
 		this.getData = this.getData.bind(this)
 	}
@@ -232,7 +233,7 @@ class Data {
 			const queryString = `
         SELECT
          [centro] as 'Centro'
-            ,[Fecha]
+            ,convert(DATE, rtrim(Fecha), 103) as 'Fecha'
             ,[Hora_QX]
             ,[Turno] 
             ,[QX]
@@ -393,15 +394,15 @@ class Data {
 			const { start, end } = query
 			const queryString = `
         SELECT
-            [fecha]
+              convert(DATE, rtrim(fecha), 103) as 'fecha'
               ,[centro] as 'Centro'
               ,[serv_bas_desc] as 'Servicio'
               ,[edadaños]
               ,[EdadMeses]
               ,[EdadDias]
-              ,[fh_llegada] as 'FechaLlegada'
-              ,[fh_entrada] as 'FechaEntrada'
-              ,[fh_salida] as 'FechaSalida'
+              ,convert(DATE, rtrim(fh_llegada), 103) as 'FechaLlegada'
+              ,convert(DATE, rtrim(fh_entrada), 103) as 'FechaEntrada'
+              ,convert(DATE, rtrim(fh_salida), 103) as 'FechaSalida'
               ,[medico_responsable] as 'Medico'
               ,[agenda] as 'Agenda'
               ,[servicio_agenda] 'ServicioAgenda'
@@ -440,6 +441,59 @@ class Data {
 			console.time("vProductividad")
 			const data = await DataService.read(queryString, replacements)
 			console.timeEnd("vProductividad")
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async vPenalizaTodos({ query, params }: functionProps) {
+		try {
+			// if (!query) {
+			// 	throw new Error("Query is required")
+			// }
+			// const { start, end } = query
+			const queryString = `
+       SELECT TOP (1000) [penalizacion_pk]
+            ,[estado]
+            ,[descripcion]
+            ,[fecha]
+            ,[consecutivo_penalizacion]
+            ,[estatus_correo_notificacion]
+            ,[fecha_notificacion]
+            ,[fecha_visualiza]
+            ,[fecha_vedefinitiva]
+            ,[ano]
+            ,[total]
+            ,[observaciones]
+            ,[proveedo_nombre]
+            ,[proveedo_rfc]
+            ,[firma]
+            ,[no_orden]
+            ,[partida]
+            ,[num_licitacion]
+            ,[unidad_hosp_nombre]
+            ,[almacen_deno]
+            ,[fecha_limite]
+            ,[porcentaje]
+            ,[movBanco]
+            ,[referencia]
+        FROM [Reportes].[dbo].[vPenalizaTodas]
+        order by fecha desc
+      `
+
+			// const replacements = {
+			// 	start,
+			// 	end,
+			// }
+			console.time("vPenalizaTodos")
+			const data = await DataService.read(queryString)
+			console.timeEnd("vPenalizaTodos")
 
 			return {
 				status: 200,
