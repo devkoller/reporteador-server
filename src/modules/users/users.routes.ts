@@ -1,11 +1,13 @@
 import { Router } from "express"
 import { Request, Response } from "express"
 import { callback } from "@/core"
+
 import User from "./users.controller"
+import { auth } from "@/middlewares/"
 
 const router = Router()
 
-router.get("/", [], (request: Request, response: Response) => {
+router.get("/", [auth.verifyToken], (request: Request, response: Response) => {
 	callback({
 		request,
 		response,
@@ -37,19 +39,23 @@ router.post("/login", [], (request: Request, response: Response) => {
 	})
 })
 
+router.post(
+	"/refresh-token",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.refreshToken,
+		})
+	}
+)
+
 router.put("/assign-role", [], (request: Request, response: Response) => {
 	callback({
 		request,
 		response,
 		callback: User.assignRoles,
-	})
-})
-
-router.put("/remove-role", [], (request: Request, response: Response) => {
-	callback({
-		request,
-		response,
-		callback: User.removeRole,
 	})
 })
 
@@ -61,12 +67,72 @@ router.put("/assign-permission", [], (request: Request, response: Response) => {
 	})
 })
 
-router.put("/remove-permission", [], (request: Request, response: Response) => {
+router.put("/assign-centers", [], (request: Request, response: Response) => {
 	callback({
 		request,
 		response,
-		callback: User.removePermission,
+		callback: User.assignCenter,
 	})
 })
+
+router.get(
+	"/centers",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.readCenters,
+		})
+	}
+)
+
+router.get(
+	"/permissions",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.readPermissions,
+		})
+	}
+)
+
+router.post(
+	"/read-user-permissions",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.readUserPermissions,
+		})
+	}
+)
+
+router.post(
+	"/read-user-centers",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.readUserCenters,
+		})
+	}
+)
+
+router.post(
+	"/refresh-permissions",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: User.refreshPermissions,
+		})
+	}
+)
 
 export default router

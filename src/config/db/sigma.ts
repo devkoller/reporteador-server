@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize"
 import { environment } from ".."
-import { initModels, DB } from "../../modules/dbModels/sigma.models"
+import { initModels, DB } from "./initModels/sigma.models"
 
 const DATABASE = environment.db.sigma.database
 const USER = environment.db.sigma.user

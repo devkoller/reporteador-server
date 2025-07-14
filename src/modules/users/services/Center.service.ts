@@ -1,5 +1,6 @@
 import { cgi } from "@/config"
 const _db = cgi.sequelize
+
 type genericType = {
 	[key: string]: any
 }
@@ -17,19 +18,20 @@ interface updateProps {
 }
 
 interface deleteProps {
-	where: genericType | null
+	id: number
 }
-class UserPermission {
+class Center {
 	constructor() {
 		this.create = this.create.bind(this)
 		this.read = this.read.bind(this)
+		this.readAll = this.readAll.bind(this)
 		this.update = this.update.bind(this)
 		this.delete = this.delete.bind(this)
 	}
 
 	async create({ body }: createProps) {
 		try {
-			const db = _db.models.UserPermission
+			const db = _db.models.Sigma_Center
 			const item = await db.create(body)
 			return item?.dataValues
 		} catch (error) {
@@ -39,7 +41,7 @@ class UserPermission {
 
 	async read({ where }: readProps) {
 		try {
-			const db = _db.models.UserPermission
+			const db = _db.models.Sigma_Center
 			const item = await db.findOne({
 				where: {
 					...where,
@@ -51,9 +53,23 @@ class UserPermission {
 		}
 	}
 
+	async readAll({ where }: readProps) {
+		try {
+			const db = _db.models.Sigma_Center
+			const item = await db.findAll({
+				where: {
+					...where,
+				},
+			})
+			return item?.map((i: any) => i.dataValues) || []
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
 	async update({ id, body }: updateProps) {
 		try {
-			const db = _db.models.UserPermission
+			const db = _db.models.Sigma_Center
 			const item = await db.update(body, {
 				where: {
 					id,
@@ -65,11 +81,13 @@ class UserPermission {
 		}
 	}
 
-	async delete({ where }: deleteProps) {
+	async delete({ id }: deleteProps) {
 		try {
-			const db = _db.models.UserPermission
+			const db = _db.models.Sigma_Center
 			const item = await db.destroy({
-				where: where as any,
+				where: {
+					id,
+				},
 			})
 			return item
 		} catch (error) {
@@ -78,4 +96,4 @@ class UserPermission {
 	}
 }
 
-export default new UserPermission()
+export default new Center()

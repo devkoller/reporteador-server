@@ -9,6 +9,11 @@ interface callBackProps {
 }
 
 const callback = async ({ request, response, callback }: callBackProps) => {
+	console.log(
+		`[${new Date().toISOString()}] ${request.method} ${
+			request.originalUrl || request.url
+		}`
+	)
 	try {
 		const result = await callback(request)
 

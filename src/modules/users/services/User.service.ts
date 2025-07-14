@@ -1,7 +1,5 @@
 import { cgi } from "@/config"
 const _db = cgi.sequelize
-import { Op } from "sequelize"
-
 type genericType = {
 	[key: string]: any
 }
@@ -21,17 +19,18 @@ interface updateProps {
 interface deleteProps {
 	id: number
 }
-class UserOtp {
+class User {
 	constructor() {
 		this.create = this.create.bind(this)
 		this.read = this.read.bind(this)
+		this.readAll = this.readAll.bind(this)
 		this.update = this.update.bind(this)
 		this.delete = this.delete.bind(this)
 	}
 
 	async create({ body }: createProps) {
 		try {
-			const db = _db.models.UserOtp
+			const db = _db.models.Sigma_User
 			const item = await db.create(body)
 			return item?.dataValues
 		} catch (error) {
@@ -41,8 +40,15 @@ class UserOtp {
 
 	async read({ where }: readProps) {
 		try {
-			const db = _db.models.UserOtp
+			const db = _db.models.Sigma_User
 			const item = await db.findOne({
+				include: [
+					{
+						model: _db.models.Sigma_Person,
+						as: "Person",
+						attributes: ["id", "firstName", "lastName1", "lastName2"],
+					},
+				],
 				where: {
 					...where,
 				},
@@ -53,9 +59,47 @@ class UserOtp {
 		}
 	}
 
+	async readAll({ where }: readProps) {
+		try {
+			const db = _db.models.Sigma_User
+			const item = await db.findAll({
+				include: [
+					{
+						model: _db.models.Sigma_Person,
+						as: "Person",
+						attributes: ["id", "firstName", "lastName1", "lastName2"],
+					},
+				],
+				where: {
+					...where,
+				},
+			})
+			return (
+				item?.map((i: any) => {
+					let data = i.dataValues
+					let firstName: string = data.Person?.firstName || ""
+					let lastName1: string = data.Person?.lastName1 || ""
+					let lastName2: string = data.Person?.lastName2 || ""
+
+					let fullName = `${firstName} ${lastName1} ${lastName2}`.trim()
+
+					return {
+						id: data.id,
+						username: data.username,
+						fullName: fullName,
+						firstName,
+						lastName1,
+						lastName2,
+					}
+				}) || []
+			)
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
 	async update({ id, body }: updateProps) {
 		try {
-			const db = _db.models.UserOtp
+			const db = _db.models.Sigma_User
 			const item = await db.update(body, {
 				where: {
 					id,
@@ -69,7 +113,7 @@ class UserOtp {
 
 	async delete({ id }: deleteProps) {
 		try {
-			const db = _db.models.UserOtp
+			const db = _db.models.Sigma_User
 			const item = await db.destroy({
 				where: {
 					id,
@@ -80,34 +124,6 @@ class UserOtp {
 			throw new Error(error instanceof Error ? error.message : String(error))
 		}
 	}
-
-	public async validate({
-		userID,
-		code,
-		type,
-	}: {
-		userID: number
-		code: string
-		type?: string
-	}) {
-		try {
-			const db = _db.models.UserOtp
-			const item = await db.findOne({
-				where: {
-					userID,
-					code,
-					type,
-					used: false,
-					expiresAt: {
-						[Op.gt]: new Date(),
-					},
-				},
-			})
-			return item?.dataValues ?? null
-		} catch (error) {
-			throw new Error(error instanceof Error ? error.message : String(error))
-		}
-	}
 }
 
-export default new UserOtp()
+export default new User()

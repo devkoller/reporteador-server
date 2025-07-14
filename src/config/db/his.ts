@@ -1,6 +1,6 @@
 import { Sequelize, DataTypes } from "sequelize"
 import { environment } from ".."
-import { initModels, DB } from "../../modules/dbModels/his.models"
+import { initModels, DB } from "./initModels/his.models"
 
 const DATABASE = environment.db.his.database
 const USER = environment.db.his.user

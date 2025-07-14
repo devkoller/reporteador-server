@@ -19,17 +19,18 @@ interface updateProps {
 interface deleteProps {
 	id: number
 }
-class Person {
+class UserRole {
 	constructor() {
 		this.create = this.create.bind(this)
 		this.read = this.read.bind(this)
+		this.readAll = this.readAll.bind(this)
 		this.update = this.update.bind(this)
 		this.delete = this.delete.bind(this)
 	}
 
 	async create({ body }: createProps) {
 		try {
-			const db = _db.models.Person
+			const db = _db.models.Sigma_UserRole
 			const item = await db.create(body)
 			return item?.dataValues
 		} catch (error) {
@@ -39,7 +40,7 @@ class Person {
 
 	async read({ where }: readProps) {
 		try {
-			const db = _db.models.Person
+			const db = _db.models.Sigma_UserRole
 			const item = await db.findOne({
 				where: {
 					...where,
@@ -51,9 +52,22 @@ class Person {
 		}
 	}
 
+	async readAll({ where }: readProps) {
+		try {
+			const db = _db.models.Sigma_User
+			const item = await db.findAll({
+				where: {
+					...where,
+				},
+			})
+			return item?.map((i: any) => i.dataValues) || []
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
 	async update({ id, body }: updateProps) {
 		try {
-			const db = _db.models.Person
+			const db = _db.models.Sigma_UserRole
 			const item = await db.update(body, {
 				where: {
 					id,
@@ -67,7 +81,7 @@ class Person {
 
 	async delete({ id }: deleteProps) {
 		try {
-			const db = _db.models.Person
+			const db = _db.models.Sigma_UserRole
 			const item = await db.destroy({
 				where: {
 					id,
@@ -80,4 +94,4 @@ class Person {
 	}
 }
 
-export default new Person()
+export default new UserRole()

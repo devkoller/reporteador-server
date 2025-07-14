@@ -4,20 +4,47 @@ type genericType = {
 import CryptoJS from "crypto-js"
 import jwt from "jsonwebtoken"
 
-import UserService from "./models/User.service"
-import PersonService from "./models/Person.service"
-import UserOtpService from "./models/UserOtp.service"
-import UserPermissionService from "./models/UserPermission.service"
-import UserRoleService from "./models/UserRole.service"
+import UserService from "./services/User.service"
+import PersonService from "./services/Person.service"
+import UserSession from "./services/UserSession.service"
+import Center from "./services/Center.service"
+import PermissionsService from "./services/Permissions.service"
+import UserPermissionService from "./services/UserPermission.service"
+import UserCenterService from "./services/UserCenter.service"
+// import UserRoleService from "./models/UserRole.service"
 
 interface functionProps {
 	body: genericType | null
+	headers: genericType | null
 	query: genericType | null
 	params: genericType | null
+	ip?: string | null
+	auth?: genericType | null
 }
 
 class User {
-	public async create({ body }: functionProps) {
+	private MAX_INTENTOS = 5
+	private BLOQUEO_MINUTOS = 15
+	private JWT_EXPIRACION_MIN = 180
+	constructor() {
+		this.create = this.create.bind(this)
+		this.readAll = this.readAll.bind(this)
+		this.update = this.update.bind(this)
+		this.delete = this.delete.bind(this)
+		this.login = this.login.bind(this)
+		this.refreshToken = this.refreshToken.bind(this)
+		this.refreshPermissions = this.refreshPermissions.bind(this)
+
+		this.readCenters = this.readCenters.bind(this)
+		this.readPermissions = this.readPermissions.bind(this)
+		this.readUserPermissions = this.readUserPermissions.bind(this)
+		this.readUserCenters = this.readUserCenters.bind(this)
+
+		this.assignPermissions = this.assignPermissions.bind(this)
+		this.assignRoles = this.assignRoles.bind(this)
+		this.assignCenter = this.assignCenter.bind(this)
+	}
+	async create({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
@@ -47,17 +74,6 @@ class User {
 				},
 			} as any)
 
-			if (userData.phone) {
-				const otp = await UserOtpService.create({
-					body: {
-						userID: user.id,
-						type: "phoneVerification",
-						expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutos
-					},
-				})
-				// aquí deberías enviar el OTP via Whatsapp
-			}
-
 			return {
 				status: 200,
 				message: "User created successfully",
@@ -67,12 +83,12 @@ class User {
 		}
 	}
 
-	public async readAll({ query, params }: functionProps) {
+	async readAll({ query, params }: functionProps) {
 		try {
-			const { where } = query || {}
-			const items = UserService.readAll({
+			const items = await UserService.readAll({
 				where: {},
 			})
+
 			return {
 				status: 200,
 				message: "Users read successfully",
@@ -83,18 +99,16 @@ class User {
 		}
 	}
 
-	public async readMe({ body }: functionProps) {
+	async readMe({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
 		try {
 			const { auth } = body
-
 			const user = await UserService.read({ where: { id: auth.id } })
 			if (!user) {
 				throw new Error("User not found")
 			}
-
 			return {
 				status: 200,
 				message: "User read successfully",
@@ -105,7 +119,7 @@ class User {
 		}
 	}
 
-	public async update({ body }: functionProps) {
+	async update({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
@@ -119,7 +133,7 @@ class User {
 		}
 	}
 
-	public async delete({ body }: functionProps) {
+	async delete({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
@@ -133,132 +147,260 @@ class User {
 		}
 	}
 
-	async login({ body }: functionProps) {
+	async login({ body, ip, headers }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
+		if (!headers || !headers["user-agent"]) {
+			throw new Error("User-Agent header is required")
+		}
+		if (!ip) {
+			throw new Error("IP address is required")
+		}
 		try {
-			const { username, password, phone, code } = body
+			const { username, password } = body
+			const userAgent = headers["user-agent"]
 			const key = process.env.PASSWORD_SECRET || "PASSWORD_SECRET"
+			const JWT_SECRET = process.env.TOKEN_KEY || "TOKEN_KEY"
 
-			// Login con email + contraseña
-			if (username && password) {
-				const user = await UserService.read({ where: { username } })
-				if (!user) throw new Error("User not found")
+			const user = await UserService.read({ where: { username } })
 
-				const bytes = CryptoJS.AES.decrypt(user.passwordHash, key)
-				const decrypted = bytes.toString(CryptoJS.enc.Utf8)
+			if (!user) throw new Error("User not found")
 
-				if (decrypted !== password) throw new Error("Invalid password")
-
-				// emitir JWT
-				const token = jwt.sign({ id: user.id }, key, { expiresIn: "8h" })
-				const firstName = user.Person.firstName
-				const lastName1 = user.Person.lastName1
-				const lastName2 = user.Person.lastName2
-				return {
-					status: 200,
-					message: "User login successfully",
-					data: {
-						user: {
-							id: user.id,
-							username: user.username,
-							email: user.email,
-							firstName,
-							lastName1,
-							lastName2,
-							fullName: `${firstName} ${lastName1} ${lastName2}`,
-						},
-						token,
-					},
-				}
+			if (user.lockoutUntil && new Date(user.lockoutUntil) > new Date()) {
+				throw new Error(
+					`User is locked until ${user.lockoutUntil.toISOString()}`
+				)
 			}
 
-			// Login con teléfono -> primero envío de OTP
-			if (phone && !code) {
-				const user = await UserService.read({ where: { phone } })
-				if (!user) throw new Error("User not found")
+			const bytes = CryptoJS.AES.decrypt(user.passwordHash, key)
+			const decrypted = bytes.toString(CryptoJS.enc.Utf8)
 
-				const otp = await UserOtpService.create({
+			if (decrypted !== password) {
+				let failedLoginAttempts = user.failedLoginAttempts || 0
+
+				await UserService.update({
+					id: user.id,
 					body: {
-						userID: user.id,
-						type: "login",
-						expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+						failedLoginAttempts: failedLoginAttempts + 1,
+						lockoutUntil:
+							failedLoginAttempts >= this.MAX_INTENTOS
+								? new Date(Date.now() + this.BLOQUEO_MINUTOS * 60 * 1000)
+								: null,
 					},
 				})
-				// envía otp.code por SMS
-				return {
-					status: 200,
-					message: "User login successfully",
-					data: {
-						user,
-						otp,
-					},
-				}
+
+				throw new Error("Invalid password")
 			}
 
-			// Login con teléfono + OTP
-			if (phone && code) {
-				const user = await UserService.read({ where: { phone } })
-				if (!user) throw new Error("User not found")
+			await UserService.update({
+				id: user.id,
+				body: {
+					failedLoginAttempts: 0,
+					lockoutUntil: null,
+					lastLoginAt: new Date(),
+					lastIP: ip,
+				},
+			})
 
-				const valid = await UserOtpService.validate({
+			await UserSession.delete({
+				where: { userID: user.id, ip },
+			})
+
+			const payload = {
+				id: user.id,
+			}
+
+			// emitir JWT
+			const token = jwt.sign(payload, JWT_SECRET, {
+				expiresIn: `${this.JWT_EXPIRACION_MIN}m`,
+			})
+
+			const expiration = new Date(
+				Date.now() + this.JWT_EXPIRACION_MIN * 60 * 1000
+			)
+
+			await UserSession.create({
+				body: {
 					userID: user.id,
-					code,
-					type: "login",
-				})
-				if (!valid) throw new Error("Invalid OTP")
+					token,
+					expiration,
+					ip,
+					userAgent,
+				},
+			})
 
-				const token = jwt.sign({ id: user.id }, key, { expiresIn: "8h" })
-				return {
-					status: 200,
-					message: "User login successfully",
-					data: {
-						token,
-						user,
+			const firstName = user.Person.firstName
+			const lastName1 = user.Person.lastName1
+			const lastName2 = user.Person.lastName2
+
+			const listUserPermissions = await UserPermissionService.readAll({
+				where: { userID: user.id },
+			})
+			const currentPermissionIds = listUserPermissions.map(
+				(permission) => permission.permissionID
+			)
+
+			return {
+				status: 200,
+				message: "User login successfully",
+				data: {
+					user: {
+						id: user.id,
+						username: user.username,
+						email: user.email,
+						firstName,
+						lastName1,
+						lastName2,
+						fullName: `${firstName} ${lastName1} ${lastName2}`,
 					},
-				}
+					permissions: currentPermissionIds,
+					token,
+				},
 			}
-
-			throw new Error("Invalid login data")
 		} catch (error) {
 			throw new Error(error instanceof Error ? error.message : String(error))
 		}
 	}
 
-	public async verifyOtp({ body }: functionProps) {
+	async refreshToken({ body, headers, auth, ip }: functionProps) {
+		if (!headers) {
+			throw new Error("Body is required")
+		}
 		if (!body) {
 			throw new Error("Body is required")
 		}
+		if (!auth) {
+			throw new Error("Auth is required")
+		}
+
+		const oldToken = headers.authorization?.split(" ")[1]
+
 		try {
-			const { userID, code } = body
+			const JWT_SECRET = process.env.TOKEN_KEY || "TOKEN_KEY"
+			const userAgent = headers["user-agent"]
 
-			const otp = await UserOtpService.validate({ userID, code })
+			if (!oldToken) {
+				throw new Error("Token is required")
+			}
 
-			if (!otp) throw new Error("Invalid OTP")
+			await UserSession.delete({
+				where: { token: oldToken },
+			})
 
-			// Marcar usuario verificado
-			await UserService.update({ id: userID, body: { isVerified: true } })
+			const payload = {
+				id: auth.id,
+			}
+
+			const token = jwt.sign(payload, JWT_SECRET, {
+				expiresIn: `${this.JWT_EXPIRACION_MIN}m`,
+			})
+
+			const expiration = new Date(
+				Date.now() + this.JWT_EXPIRACION_MIN * 60 * 1000
+			)
+
+			await UserSession.create({
+				body: {
+					userID: auth.id,
+					token,
+					expiration,
+					ip: ip,
+					userAgent,
+				},
+			})
+
+			// const { userID, code } = body
+			// const otp = await UserOtpService.validate({ userID, code })
+			// if (!otp) throw new Error("Invalid OTP")
+			// // Marcar usuario verificado
+			// await UserService.update({ id: userID, body: { isVerified: true } })
+			return {
+				status: 200,
+				message: "User verified successfully",
+				data: {
+					token,
+				},
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async refreshPermissions({ auth }: functionProps) {
+		if (!auth) {
+			throw new Error("Auth is required")
+		}
+
+		try {
+			const listUserPermissions = await UserPermissionService.readAll({
+				where: { userID: auth.id },
+			})
+			const currentPermissionIds = listUserPermissions.map(
+				(permission) => permission.permissionID
+			)
 
 			return {
 				status: 200,
 				message: "User verified successfully",
+				data: currentPermissionIds,
 			}
 		} catch (error) {
 			throw new Error(error instanceof Error ? error.message : String(error))
 		}
 	}
 
-	public async assignRoles({ body }: functionProps) {
+	async assignRoles({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
 		try {
-			const { userID, roleID } = body
+			// const { userID, roleID } = body
+			// await UserRoleService.create({
+			// 	body: { userID, roleID },
+			// })
+			// return {
+			// 	status: 200,
+			// 	message: "User updated successfully",
+			// }
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
 
-			await UserRoleService.create({
-				body: { userID, roleID },
+	async assignPermissions({ body }: functionProps) {
+		if (!body) {
+			throw new Error("Body is required")
+		}
+		try {
+			const { permissions, userID } = body
+
+			const listUserPermissions = await UserPermissionService.readAll({
+				where: { userID: userID },
 			})
+			const currentPermissionIds = listUserPermissions.map(
+				(permission) => permission.permissionID
+			)
+
+			const toAdd = permissions.filter(
+				(id: number) => !currentPermissionIds.includes(id)
+			)
+
+			const toRemove = currentPermissionIds.filter(
+				(id) => !permissions.includes(id)
+			)
+
+			for (const permissionID of toAdd) {
+				await UserPermissionService.create({
+					body: { userID, permissionID },
+				})
+			}
+
+			for (const permissionID of toRemove) {
+				await UserPermissionService.delete({
+					where: { userID, permissionID },
+				})
+			}
 
 			return {
 				status: 200,
@@ -269,16 +411,36 @@ class User {
 		}
 	}
 
-	public async removeRole({ body }: functionProps) {
+	async assignCenter({ body }: functionProps) {
 		if (!body) {
 			throw new Error("Body is required")
 		}
 		try {
-			const { userID, roleID } = body
+			const { centers, userID } = body
 
-			await UserRoleService.delete({
-				where: { userID, roleID },
+			const listUserCenter = await UserCenterService.readAll({
+				where: { userID: userID },
 			})
+
+			const currentCenterIds = listUserCenter.map((center) => center.centerID)
+
+			const toAdd = centers.filter(
+				(id: number) => !currentCenterIds.includes(id)
+			)
+
+			const toRemove = currentCenterIds.filter((id) => !centers.includes(id))
+
+			for (const centerID of toAdd) {
+				await UserCenterService.create({
+					body: { userID, centerID },
+				})
+			}
+
+			for (const centerID of toRemove) {
+				await UserCenterService.delete({
+					where: { userID, centerID },
+				})
+			}
 
 			return {
 				status: 200,
@@ -289,40 +451,74 @@ class User {
 		}
 	}
 
-	public async assignPermissions({ body }: functionProps) {
-		if (!body) {
-			throw new Error("Body is required")
-		}
+	async readCenters({}: functionProps) {
 		try {
-			const { userID, permissionID } = body
-
-			await UserPermissionService.create({
-				body: { userID, permissionID },
+			const items = await Center.readAll({
+				where: {},
 			})
 
 			return {
 				status: 200,
-				message: "User updated successfully",
+				message: "Centers read successfully",
+				data: items,
 			}
 		} catch (error) {
 			throw new Error(error instanceof Error ? error.message : String(error))
 		}
 	}
 
-	public async removePermission({ body }: functionProps) {
-		if (!body) {
-			throw new Error("Body is required")
-		}
+	async readPermissions({}: functionProps) {
 		try {
-			const { userID, permissionID } = body
-
-			await UserPermissionService.delete({
-				where: { userID, permissionID },
+			const permissions = await PermissionsService.readAll({
+				where: {},
 			})
 
 			return {
 				status: 200,
-				message: "User updated successfully",
+				message: "Permissions read successfully",
+				data: permissions,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async readUserPermissions({ body }: functionProps) {
+		if (!body) {
+			throw new Error("Body is required")
+		}
+		try {
+			const { userID } = body
+
+			const permissions = await UserPermissionService.readAll({
+				where: { userID },
+			})
+
+			return {
+				status: 200,
+				message: "User permissions read successfully",
+				data: permissions,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async readUserCenters({ body }: functionProps) {
+		if (!body) {
+			throw new Error("Body is required")
+		}
+		try {
+			const { userID } = body
+
+			const permissions = await UserCenterService.readAll({
+				where: { userID },
+			})
+
+			return {
+				status: 200,
+				message: "User permissions read successfully",
+				data: permissions,
 			}
 		} catch (error) {
 			throw new Error(error instanceof Error ? error.message : String(error))

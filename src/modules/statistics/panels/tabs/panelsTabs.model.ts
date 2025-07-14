@@ -1,6 +1,6 @@
 import * as Sequelize from "sequelize"
 import { DataTypes, Model, Optional } from "sequelize"
-import { DB } from "../../../dbModels/cgi.models"
+import { DB } from "../../../../config/db/initModels/cgi.models"
 
 export interface panelsTabsAttributes {
 	id: number
