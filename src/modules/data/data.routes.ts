@@ -8,85 +8,37 @@ import { auth } from "@/middlewares/"
 const router = Router()
 
 router.get(
-	"/vCitados",
+	"/contracts",
 	[auth.verifyToken, auth.authorizeRouteAccess],
 	(request: Request, response: Response) => {
 		callback({
 			request,
 			response,
-			callback: Data.vCitados,
+			callback: Data.vContratos_adquisiciones,
 		})
 	}
 )
 
 router.get(
-	"/vIngresosAdministrativos",
+	"/orders",
 	[auth.verifyToken, auth.authorizeRouteAccess],
 	(request: Request, response: Response) => {
 		callback({
 			request,
 			response,
-			callback: Data.vIngresosAdministrativos,
+			callback: Data.vOrdenes_compra,
 		})
 	}
 )
 
 router.get(
-	"/vCirugias",
+	"/sufficiencies",
 	[auth.verifyToken, auth.authorizeRouteAccess],
 	(request: Request, response: Response) => {
 		callback({
 			request,
 			response,
-			callback: Data.vCirugias,
-		})
-	}
-)
-
-router.get(
-	"/vUrgencias",
-	[auth.verifyToken, auth.authorizeRouteAccess],
-	(request: Request, response: Response) => {
-		callback({
-			request,
-			response,
-			callback: Data.vUrgencias,
-		})
-	}
-)
-
-router.get(
-	"/vProductividad",
-	[auth.verifyToken, auth.authorizeRouteAccess],
-	(request: Request, response: Response) => {
-		callback({
-			request,
-			response,
-			callback: Data.vProductividad,
-		})
-	}
-)
-
-router.get(
-	"/vPenalizaTodos",
-	[auth.verifyToken, auth.authorizeRouteAccess],
-	(request: Request, response: Response) => {
-		callback({
-			request,
-			response,
-			callback: Data.vPenalizaTodos,
-		})
-	}
-)
-
-router.get(
-	"/vIncumplimientos",
-	[auth.verifyToken, auth.authorizeRouteAccess],
-	(request: Request, response: Response) => {
-		callback({
-			request,
-			response,
-			callback: Data.vIncumplimientos,
+			callback: Data.vSuficiencia,
 		})
 	}
 )

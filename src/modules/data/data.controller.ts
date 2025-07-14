@@ -23,68 +23,32 @@ interface functionProps {
 
 class Data {
 	constructor() {
-		this.vCitados = this.vCitados.bind(this)
-		this.vIngresosAdministrativos = this.vIngresosAdministrativos.bind(this)
-		this.vCirugias = this.vCirugias.bind(this)
-		this.vUrgencias = this.vUrgencias.bind(this)
-		this.vProductividad = this.vProductividad.bind(this)
-		this.vPenalizaTodos = this.vPenalizaTodos.bind(this)
-		this.vIncumplimientos = this.vIncumplimientos.bind(this)
+		this.vContratos_adquisiciones = this.vContratos_adquisiciones.bind(this)
+		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
+		this.vSuficiencia = this.vSuficiencia.bind(this)
+
 		this.pdfReport = this.pdfReport.bind(this)
 		this.getData = this.getData.bind(this)
 	}
 
-	async vCitados({ query, params }: functionProps) {
+	async vContratos_adquisiciones({ query, params }: functionProps) {
 		try {
-			if (!query) {
-				throw new Error("Query is required")
-			}
-			const { start, end } = query
 			const queryString = `
         SELECT 
-            FORMAT(t_entrada, 'HH:mm', 'es-ES') as 'HoraEntrada'
-          ,FORMAT(t_salida, 'HH:mm', 'es-ES') as 'HoraSalida'
-          ,[FECHA] as 'Fecha'
-          ,[HORA] as 'Hora'
-          ,[Medico] as 'Agenda'
-          ,[cod_estado]
-          ,[estado] as 'EstadoCita'
-          ,[TIPO_CITA] as 'Tipo'
-          ,[centro_siglas] as 'Centro'
-          ,[servicio] as 'Servicio'
-          ,[cita]
-          ,[codigo_visita]
-          ,[visita] as 'Visita'
-          ,[registro]
-          ,[nombrecom]
-          ,[fecha_nac]
-          ,[nombre_sexo] as 'Genero'
-          ,[apellido1]
-          ,[apellido2]
-          ,[nombre]
-          ,[rud_emision]
-          ,[login_emision] as 'Usuario'
-          ,[estado_res] as 'Estado'
-          ,[municipio] as 'Municipio'
-          ,[localidad] as 'Localidad'
-          ,[colonia] as 'Colonia' 
-        FROM Reportes.dbo.vCITADOS_TODOS
-        WHERE codigo_visita NOT IN ('QR') AND
-          cod_estado NOT IN ('LI') AND
-          ISNULL(n_solic, 0) != 0 AND
-          convert(DATE, rtrim(FECHA), 103) 
-          BETWEEN convert(DATE, rtrim(:start), 103) 
-          and convert(DATE, rtrim(:end), 103)
-        ORDER BY CONVERT(date, RTRIM(fecha), 103)
+            TOP 25000
+            *,
+            CONVERT(VARCHAR(10), fecha, 103) as fecha,
+            CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
+            CONVERT(VARCHAR(10), vigencia_inicio, 103) as vigencia_inicio
+        FROM vContratos_adquisiciones
+        order by proveedo_nom
       `
 
-			const replacements = {
-				start,
-				end,
-			}
-			console.time("vCitados")
+			const replacements = {}
+
+			console.time("vContratos_adquisiciones")
 			const data = await DataService.read(queryString, replacements)
-			console.timeEnd("vCitados")
+			console.timeEnd("vContratos_adquisiciones")
 
 			return {
 				status: 200,
@@ -96,124 +60,20 @@ class Data {
 		}
 	}
 
-	async vIngresosAdministrativos({ query, params }: functionProps) {
+	async vOrdenes_compra({ query, params }: functionProps) {
 		try {
-			if (!query) {
-				throw new Error("Query is required")
-			}
-			const { start, end, type } = query
-			let wherQuery = {
-				Ingresos: `where  convert(DATE, rtrim(fechaing), 103) 
-          BETWEEN convert(DATE, rtrim(:start), 103) 
-          and convert(DATE, rtrim(:end), 103)
-          ORDER by fechaing`,
-
-				Egresos: `where  convert(DATE, rtrim(fechaegr), 103) 
-          BETWEEN convert(DATE, rtrim(:start), 103) 
-          and convert(DATE, rtrim(:end), 103)
-          and ISNULL(fechaegr, '') != ''
-          ORDER by fechaegr`,
-
-				Ocupacion: `and ISNULL(fechaegr, '') = '' ORDER by fechaing`,
-			}
-
 			const queryString = `
-       SELECT
-            [epis_pk]
-            ,c.cod_cama
-            ,c.servicio as 'servicio_cama'
-            ,c.estado_cama
-            ,CASE
-                when isnull(c.censable, 0) = 0 THEN 'NO' 
-                else 'SI'
-            end as 'censable'
-            ,[registro]
-            ,[nombres] + ' ' +[apellido1] + ' ' + [apellido2] as nombre
-            ,[id_segsoc]
-            ,[segsoc]
-            ,[fecha_nac]
-            ,[Localidad]
-            ,[Municipio]
-            ,[Estado]
-            ,CONVERT(VARCHAR(10), fechaing, 103)   as 'FechaIngreso'
-            ,CONVERT(VARCHAR(10), fechaegr, 103)   as 'FechaEgreso'
-            ,[numdias]
-            ,[hrs]
-            ,[cama]
-            ,[CIE] + ' - ' + [CIE_DESC] as 'Diagnostico'
-            ,[capturo]
-            ,i.[servicio]
-            ,[meding]
-            ,[Fecha_Alta]
-            ,[Hora_Alta]
-            ,[CIE_ALTA]
-            ,[CIE_ALTA] + ' - ' + [CIE_DESC_ALTA] as 'CIE_DESC_ALTA'
-            ,[Motivo_alta]
-            ,[Destino_alta]
-            ,[med_alta]
-            ,[sexo] as 'Genero'
-            ,[edocivil] as 'EstadoCivil'
-            ,[ocupa] as 'Ocupacion'
-            ,[escol] as 'Escolaridad'
-            ,[Procedencia]
-            ,[Proc_urg]
-            ,[PISO_DESC]
-            ,[division]
-            ,[siih]
-            ,[ssj]
-            ,i.[divi]
-            ,c.divi as 'divi_cama'
-            ,CASE
-                when isnull(i.centro, '') != '' then i.centro
-                else c.centro 
-            end as 'Centro'
-            ,[unidad_enfermeria] as 'UnidadEnfermeria'
-            ,[nom_pagador_evento] as 'PagadorEvento'
-            ,[ing_tipo_desc]
-            ,[servicio_egreso] as 'ServicioEgreso'
-            ,CONCAT(
-                [edadaños], ' Años ',
-                [EdadMeses], ' meses ',
-                [EdadDias], ' días'
-              ) AS edad
-            ,[edadaños]
-            ,[EdadMeses]
-            ,[EdadDias]
-            ,[TURNO_INGRESO] 'TurnoIngreso'
-            ,CASE
-                      when ISNULL(fechaegr, '') = '' then 'NO'
-                      else 'SI'
-                    END as 'Egreso'
-                    ,(SELECT top 1
-
-                case
-                    when isnull(e.rud, '') <> '' then 'MEDICO DE EMPLEADOS'
-                    else isnull(d.nombre_garante, 'SIN CLASIFICAR')
-                end as nombre_garante
-
-                from hcg_produccion.dbo.hc h
-                left join (select *
-                    from hcg_his.dbo.INSA_DERECHOHABIENCIA
-                    where convert(date, i.fechaing) between dia
-                    and convert(date, fech_fin_cove)
-                ) d on h.nhc collate database_default = d.nhc collate database_default
-                left join hcg_vfp.dbo.medemp_beneficiarios e on h.nhc = e.expediente
-                where isnull(h.activa_sn,0) = 1
-            and h.nhc=i.registro
-                order by d.dia desc) as financiamiento
-        FROM [Reportes].[dbo].[vIngresosAdministrativos] i
-        RIGHT JOIN Reportes.dbo.vcamas c
-        ON i.cama = c.cod_cama
-        ${wherQuery[type as keyof typeof wherQuery]}
+        SELECT 
+          TOP 25000
+          * 
+        FROM vOrdenes_compra
       `
 
-			const replacements = {
-				start,
-				end,
-			}
-			console.time("vIngresosAdministrativos")
+			const replacements = {}
+
+			console.time("vOrdenes_compra")
 			const data = await DataService.read(queryString, replacements)
-			console.timeEnd("vIngresosAdministrativos")
+			console.timeEnd("vOrdenes_compra")
 
 			return {
 				status: 200,
@@ -225,346 +85,23 @@ class Data {
 		}
 	}
 
-	async vCirugias({ query, params }: functionProps) {
+	async vSuficiencia({ query, params }: functionProps) {
 		try {
-			if (!query) {
-				throw new Error("Query is required")
-			}
-			const { start, end } = query
 			const queryString = `
         SELECT
-         [centro] as 'Centro'
-            ,convert(DATE, rtrim(Fecha), 103) as 'Fecha'
-            ,[Hora_QX]
-            ,[Turno] 
-            ,[QX]
-            ,[Paciente] as 'Nombre'
-            ,[registro]
-            ,[FechaNac] as 'fecha_nac'
-            ,[nombre_sexo] as 'Genero'
-            ,[Diagnostico]
-            ,[Cirugia]
-            ,[cirujano]
-            ,[Radiologo]
-            ,[anestesiologo]
-            ,[MotivoSuspension]
-            ,[servicio] as 'Servicio'
-            ,[imprevisto]
-            ,[ambulatorio]
-            ,[suspendida]
-            ,[ci_inter_diagno1] 
-            ,[icd_nom_proc_ppal]
-            ,[descripcion]
-            ,[fechacir] 'FechaCirugia'
-            ,[ejercicio]
-            ,[registro_reserva]
-            ,[rud_reserva]
-        FROM [Reportes].[dbo].[vCirugiasProgramadas]
-        where convert(DATE, rtrim(Fecha), 103) 
-          BETWEEN convert(DATE, rtrim(:start), 103) 
-          and convert(DATE, rtrim(:end), 103)
+          TOP 25000
+          *,
+          CONVERT(VARCHAR(10), fech_alta, 103) as fech_alta,
+          CONVERT(VARCHAR(10), fech_cier, 103) as fech_cier
+         
+        FROM vSuficiencia
       `
 
-			const replacements = {
-				start,
-				end,
-			}
+			const replacements = {}
 
-			console.time("vCirugias")
+			console.time("vSuficiencia")
 			const data = await DataService.read(queryString, replacements)
-			console.timeEnd("vCirugias")
-
-			return {
-				status: 200,
-				message: "Datas read successfully",
-				data,
-			}
-		} catch (error) {
-			throw new Error(error instanceof Error ? error.message : String(error))
-		}
-	}
-
-	async vUrgencias({ query, params }: functionProps) {
-		try {
-			if (!query) {
-				throw new Error("Query is required")
-			}
-			const { start, end } = query
-			const queryString = `
-        SELECT TOP (1000) 
-            [epis_pk]
-            ,CONVERT(VARCHAR(10), Fechaing, 103) as 'FechaIngreso'
-            ,FORMAT(Fechaing, 'HH:mm', 'es-ES') as 'HoraIngreso'
-            ,CONVERT(VARCHAR(10), fechaate, 103) as 'FechaAtendido'
-            ,FORMAT(fechaate, 'HH:mm', 'es-ES') as 'HoraAtendido'
-            ,CONVERT(VARCHAR(10), fechaegr, 103) as 'FechaEgreso'
-            ,FORMAT(fechaegr, 'HH:mm', 'es-ES') as 'HoraEgreso'
-            ,[registro]
-            ,[nombrecom] as 'Nombre'
-            ,[fecha_nac] 
-            ,[sexo] as 'Genero'
-            ,[estado_residencia] as 'Estado'
-            ,[nombre_municipio_residencia] as 'Municipio' 
-            ,[nombre_localidad_residencia] as 'Localidad'
-            ,[PrimeraVez]
-            ,[diag_egr] as 'DiagnosticoEgreso'
-            ,[motivo_urg_libre] as 'MotivoUrgenciaLibre'
-            ,[NombreMedico]
-            ,[nombreresponsable]
-            ,[destino_urgencias] as 'DestinoUrgencias'
-            ,[procedencia] as 'Procedencia'
-            ,[desc_area]
-            ,[tipo_urgencia]
-            ,[seguridad_social] as 'SeguridadSocial'
-            ,[servicio_ingreso] as 'ServicioIngreso'
-            ,[entrada_fecha] as 'FechaEntrada'
-            ,[salida_fecha] as 'FechaSalida'
-            ,[motivo_urgencia] as 'MotivoUrgencia'
-            ,[centro] as 'Centro'
-            ,[TURNO] as 'Turno'
-            ,[PISO_DESC] as 'Piso'
-            ,[unidad_enfermeria] as 'UnidadEnfermeria'
-            ,[diag_ing] as 'DiagnostivoIngreso'
-            ,[nom_pagador_evento] as 'Pagador'
-            ,[localizacion] as 'Localizacion'
-            ,[usuario_registro]
-            ,[categoria_registro]
-            ,[atencion_fecha] as 'FechaAtencion'
-            ,[edadaños]
-            ,[EdadMeses]
-            ,[EdadDias]
-            ,CASE
-              when isnull(nombre_garante, '') = '' then 'SIN CLASIFICAR'
-              else nombre_garante
-            END as financiamiento
-            ,CONCAT(
-              [edadaños], ' Años ',
-              [EdadMeses], ' meses ',
-              [EdadDias], ' días'
-            ) AS edad
-        FROM [Reportes].[dbo].[vUrgencias] i
-        left join (
-          SELECT 
-              case 
-                  when isnull(e.rud, '') <> '' then 10 
-                  else isnull(d.CODIGO_GARANTE_PK, 0) 
-              END as codigo_garante, 
-              case 
-                  when isnull(e.rud, '') <> '' then 'MEDICO DE EMPLEADOS' 
-                  else isnull(d.nombre_garante, 'SIN CLASIFICAR') 
-              end as nombre_garante,
-              h.nhc
-              from hcg_produccion.dbo.hc h 
-              left join (select *
-                  from hcg_his.dbo.INSA_DERECHOHABIENCIA
-                  where convert(date, getdate()) between dia 
-                  and convert(date, fech_fin_cove)
-              ) d on h.nhc = d.nhc collate Modern_Spanish_CI_AS 
-              left join hcg_vfp.dbo.medemp_beneficiarios e on h.nhc = e.expediente
-              where isnull(h.activa_sn,0) = 1
-             
-        ) as garante 
-        on i.registro = garante.nhc 
-        where  convert(DATE, rtrim(fechaing), 103) 
-          BETWEEN convert(DATE, rtrim(:start), 103) 
-          and convert(DATE, rtrim(:end), 103)
-      `
-
-			const replacements = {
-				start,
-				end,
-			}
-
-			const data = await DataService.read(queryString, replacements)
-
-			return {
-				status: 200,
-				message: "Datas read successfully",
-				data,
-			}
-		} catch (error) {
-			throw new Error(error instanceof Error ? error.message : String(error))
-		}
-	}
-
-	async vProductividad({ query, params }: functionProps) {
-		try {
-			if (!query) {
-				throw new Error("Query is required")
-			}
-			const { start, end } = query
-			const queryString = `
-        SELECT
-              convert(DATE, rtrim(fecha), 103) as 'fecha'
-              ,[centro] as 'Centro'
-              ,[serv_bas_desc] as 'Servicio'
-              ,[edadaños]
-              ,[EdadMeses]
-              ,[EdadDias]
-              ,convert(DATE, rtrim(fh_llegada), 103) as 'FechaLlegada'
-              ,convert(DATE, rtrim(fh_entrada), 103) as 'FechaEntrada'
-              ,convert(DATE, rtrim(fh_salida), 103) as 'FechaSalida'
-              ,[medico_responsable] as 'Medico'
-              ,[agenda] as 'Agenda'
-              ,[servicio_agenda] 'ServicioAgenda'
-              ,[div]
-              ,[nombrecom] as 'Nombre'
-              ,[registro]
-              ,[fecha_nac] 
-              ,[SEXO] as 'Genero'
-              ,[estado] as 'Estado'
-              ,[municipio] as 'Municipio'
-              ,[localidad] as 'Localidad'
-              ,[CITAS_AÑO]
-              ,[CITAS_SERV_AÑO]
-              ,[Tipo_visita] as 'Visita'
-              ,[DIAGNOSTICO] as 'Diagnostico'
-              ,[estado_cita] as 'EstadoCita'
-              ,[TIPO_CITA] as 'TipoCita'
-              ,[diagnosticos]
-              ,[nom_pagador_evento] as 'Pagador'
-              ,[nombre_corto]
-              ,[Turno] as 'Turno'
-              ,[agenda_efectora]
-              ,[prest_item_desc] as 'Cita'
-              ,[n_solic]
-          FROM [Reportes].[dbo].[vProductividad_cex]
-          where convert(DATE, rtrim(fecha), 103) 
-            BETWEEN convert(DATE, rtrim(:start), 103) 
-            and convert(DATE, rtrim(:end), 103)
-          order by fecha desc
-      `
-
-			const replacements = {
-				start,
-				end,
-			}
-			console.time("vProductividad")
-			const data = await DataService.read(queryString, replacements)
-			console.timeEnd("vProductividad")
-
-			return {
-				status: 200,
-				message: "Datas read successfully",
-				data,
-			}
-		} catch (error) {
-			throw new Error(error instanceof Error ? error.message : String(error))
-		}
-	}
-
-	async vPenalizaTodos({ query, params }: functionProps) {
-		try {
-			// if (!query) {
-			// 	throw new Error("Query is required")
-			// }
-			// const { start, end } = query
-			const queryString = `
-       SELECT TOP (1000) [penalizacion_pk]
-            ,[estado]
-            ,[descripcion]
-            ,[fecha]
-            ,[consecutivo_penalizacion]
-            ,[estatus_correo_notificacion]
-            ,[fecha_notificacion]
-            ,[fecha_visualiza]
-            ,[fecha_vedefinitiva]
-            ,[ano]
-            ,[total]
-            ,[observaciones]
-            ,[proveedo_nombre]
-            ,[proveedo_rfc]
-            ,[firma]
-            ,[no_orden]
-            ,[partida]
-            ,[num_licitacion]
-            ,[unidad_hosp_nombre]
-            ,[almacen_deno]
-            ,[fecha_limite]
-            ,[porcentaje]
-            ,[movBanco]
-            ,[referencia]
-        FROM [Reportes].[dbo].[vPenalizaTodas]
-        order by fecha desc
-      `
-
-			// const replacements = {
-			// 	start,
-			// 	end,
-			// }
-			console.time("vPenalizaTodos")
-			const data = await DataService.read(queryString)
-			console.timeEnd("vPenalizaTodos")
-
-			return {
-				status: 200,
-				message: "Datas read successfully",
-				data,
-			}
-		} catch (error) {
-			throw new Error(error instanceof Error ? error.message : String(error))
-		}
-	}
-
-	async vIncumplimientos({ query, params }: functionProps) {
-		try {
-			// if (!query) {
-			// 	throw new Error("Query is required")
-			// }
-			// const { start, end } = query
-			const queryString = `
-      SELECT TOP (1000) [no_orden]
-            ,[partida]
-            ,[num_licitacion]
-            ,[unidad_hosp_nombre]
-            ,[almacen_deno]
-            ,[total_ord]
-            ,[incumplimiento_pk]
-            ,[fecha]
-            ,[referencia_pk]
-            ,[tipo_origen_pk]
-            ,[fecha_limite]
-            ,[cantidad_incumple]
-            ,[estado]
-            ,[ano]
-            ,[proveedo_pk]
-            ,[penalizacion_detalle_pk]
-            ,[monto_incumple]
-            ,[precio]
-            ,[observaciones]
-            ,[motivo_cancelacion_pk]
-            ,[mov_fecha_con]
-            ,[mov_almacen_linpk]
-            ,[mov_cantidad]
-            ,[ordenpk]
-            ,[retraso]
-            ,[porcentaje]
-            ,[mov_alma_linpk]
-            ,[articulo]
-            ,[proveedo_nom]
-            ,[uh]
-            ,[cod_articulo]
-            ,[observacionesorden]
-            ,[usuario]
-            ,[idprorroga]
-            ,[aplicado]
-            ,[id_incumple]
-            ,[Expr1]
-            ,[estado2]
-            ,[tipo_origen_pk_2]
-            ,[cod_bar_mc_pr]
-            ,[factura]
-        FROM [Reportes].[dbo].[vIncumplimientosTodos]
-        order by fecha desc
-      `
-
-			// const replacements = {
-			// 	start,
-			// 	end,
-			// }
-			console.time("vIncumplimientos")
-			const data = await DataService.read(queryString)
-			console.timeEnd("vIncumplimientos")
+			console.timeEnd("vSuficiencia")
 
 			return {
 				status: 200,
@@ -847,45 +384,6 @@ class Data {
 	async getData({ type, start, end, typeReport }: any) {
 		try {
 			let result: any = []
-			switch (type) {
-				case 1:
-					result = await this.vCitados({
-						query: { start, end },
-						params: {},
-						body: null,
-					})
-					break
-				case 2:
-					result = await this.vIngresosAdministrativos({
-						query: { start, end, type: typeReport },
-						params: {},
-						body: null,
-					})
-					break
-				case 3:
-					result = await this.vCirugias({
-						query: { start, end },
-						params: {},
-						body: null,
-					})
-					break
-				case 4:
-					result = await this.vUrgencias({
-						query: { start, end },
-						params: {},
-						body: null,
-					})
-					break
-				case 5:
-					result = await this.vProductividad({
-						query: { start, end },
-						params: {},
-						body: null,
-					})
-					break
-				default:
-					break
-			}
 
 			return result.data
 		} catch (error) {

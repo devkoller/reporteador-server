@@ -1,5 +1,5 @@
-import { sigma } from "@/config"
-const _db = sigma.sequelize
+import { cgi } from "@/config"
+const _db = cgi.sequelize
 import { QueryTypes } from "sequelize"
 
 class Data {
@@ -8,7 +8,6 @@ class Data {
 			const data = _db.query(query, {
 				type: QueryTypes.SELECT,
 				replacements,
-				logging: console.log,
 			})
 
 			return data

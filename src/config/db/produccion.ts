@@ -1,5 +1,5 @@
 import { Sequelize, DataTypes } from "sequelize"
-import { environment } from "../"
+import { environment } from ".."
 import { initModels, DB } from "./initModels/produccion.models"
 
 const DATABASE = environment.db.produccion.database

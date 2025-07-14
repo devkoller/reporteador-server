@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize"
-import { environment } from "../"
+import { environment } from ".."
 import { initModels, DB } from "./initModels/cgi.models"
 
 const DATABASE = environment.db.cgi.database
