@@ -24,6 +24,9 @@ interface functionProps {
 class Data {
 	constructor() {
 		this.vContratos_adquisiciones = this.vContratos_adquisiciones.bind(this)
+		this.getNumLicitacion = this.getNumLicitacion.bind(this)
+		this.getEjercicio = this.getEjercicio.bind(this)
+		this.getCodArticulo = this.getCodArticulo.bind(this)
 		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
 		this.vSuficiencia = this.vSuficiencia.bind(this)
 
@@ -31,20 +34,117 @@ class Data {
 		this.getData = this.getData.bind(this)
 	}
 
-	async vContratos_adquisiciones({ query, params }: functionProps) {
+	async getNumLicitacion({}: functionProps) {
 		try {
 			const queryString = `
         SELECT 
-            TOP 25000
+            num_licitacion as value,
+            num_licitacion as label
+        FROM vContratos_adquisiciones
+        GROUP BY num_licitacion
+        ORDER BY num_licitacion DESC
+      `
+
+			const data = await DataService.read(queryString)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getEjercicio({}: functionProps) {
+		try {
+			const queryString = `
+        SELECT 
+            ejercicio as value,
+            ejercicio as label
+        FROM vContratos_adquisiciones
+        GROUP BY ejercicio
+        ORDER BY ejercicio DESC
+      `
+
+			const data = await DataService.read(queryString)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getCodArticulo({}: functionProps) {
+		try {
+			const queryString = `
+        SELECT 
+            cod_bar_mc_pr as value,
+            cod_bar_mc_pr as label
+        FROM vContratos_adquisiciones
+        GROUP BY cod_bar_mc_pr
+        ORDER BY cod_bar_mc_pr DESC
+      `
+
+			const data = await DataService.read(queryString)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async vContratos_adquisiciones({ body }: functionProps) {
+		const { num_licitacion, cod_bar_mc_pr, ejercicio } = body || {}
+		console.log(
+			"🚀 > data.controller.ts:108 > Data > vContratos_adquisiciones > body:",
+			body
+		)
+
+		try {
+			let whereClause = ""
+
+			if (num_licitacion) {
+				whereClause += ` AND num_licitacion = :num_licitacion`
+			}
+
+			if (cod_bar_mc_pr) {
+				whereClause += ` AND cod_bar_mc_pr = :cod_bar_mc_pr`
+			}
+
+			if (ejercicio) {
+				whereClause += ` AND ejercicio = :ejercicio`
+			}
+
+			const queryString = `
+        SELECT 
             *,
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
             CONVERT(VARCHAR(10), vigencia_inicio, 103) as vigencia_inicio
         FROM vContratos_adquisiciones
+        where 1=1 ${whereClause}
         order by proveedo_nom
       `
+			console.log(
+				"🚀 > data.controller.ts:58 > Data > vContratos_adquisiciones > queryString:",
+				queryString
+			)
 
-			const replacements = {}
+			const replacements = {
+				num_licitacion,
+				cod_bar_mc_pr,
+				ejercicio,
+			}
 
 			console.time("vContratos_adquisiciones")
 			const data = await DataService.read(queryString, replacements)

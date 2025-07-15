@@ -8,6 +8,42 @@ import { auth } from "@/middlewares/"
 const router = Router()
 
 router.get(
+	"/licitaciones",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getNumLicitacion,
+		})
+	}
+)
+
+router.get(
+	"/articulos",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getCodArticulo,
+		})
+	}
+)
+
+router.get(
+	"/ejercicios",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getEjercicio,
+		})
+	}
+)
+
+router.post(
 	"/contracts",
 	[auth.verifyToken, auth.authorizeRouteAccess],
 	(request: Request, response: Response) => {
