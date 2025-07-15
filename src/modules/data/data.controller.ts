@@ -27,25 +27,39 @@ class Data {
 		this.getNumLicitacion = this.getNumLicitacion.bind(this)
 		this.getEjercicio = this.getEjercicio.bind(this)
 		this.getCodArticulo = this.getCodArticulo.bind(this)
-		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
 		this.vSuficiencia = this.vSuficiencia.bind(this)
 
 		this.pdfReport = this.pdfReport.bind(this)
 		this.getData = this.getData.bind(this)
+
+		this.getOrderNumLicitacion = this.getOrderNumLicitacion.bind(this)
+		this.getOrderEjercicio = this.getOrderEjercicio.bind(this)
+		this.getOrderCodArticulo = this.getOrderCodArticulo.bind(this)
+		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
 	}
 
-	async getNumLicitacion({}: functionProps) {
+	async getNumLicitacion({ query }: functionProps) {
 		try {
+			let whereQuery = ""
+			if (query?.ejercicio) {
+				whereQuery = `AND ejercicio = :ejercicio`
+			}
+
 			const queryString = `
         SELECT 
             num_licitacion as value,
             num_licitacion as label
         FROM vContratos_adquisiciones
+        WHERE 1=1 ${whereQuery}
         GROUP BY num_licitacion
         ORDER BY num_licitacion DESC
       `
 
-			const data = await DataService.read(queryString)
+			const replacements = {
+				ejercicio: query?.ejercicio || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
 
 			return {
 				status: 200,
@@ -80,15 +94,87 @@ class Data {
 		}
 	}
 
-	async getCodArticulo({}: functionProps) {
+	async getCodArticulo({ query }: functionProps) {
 		try {
+			let whereQuery = ""
+
+			if (query?.ejercicio) {
+				whereQuery = `AND ejercicio = :ejercicio`
+			}
+
+			if (query?.num_licitacion) {
+				whereQuery += ` AND num_licitacion = :num_licitacion`
+			}
+
 			const queryString = `
         SELECT 
             cod_bar_mc_pr as value,
             cod_bar_mc_pr as label
         FROM vContratos_adquisiciones
+        WHERE 1=1 ${whereQuery}
         GROUP BY cod_bar_mc_pr
         ORDER BY cod_bar_mc_pr DESC
+      `
+
+			const replacements: any = {
+				ejercicio: query?.ejercicio || null,
+				num_licitacion: query?.num_licitacion || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getOrderNumLicitacion({ query }: functionProps) {
+		try {
+			let whereQuery = ""
+			if (query?.ejercicio) {
+				whereQuery = `AND año = :ejercicio`
+			}
+
+			const queryString = `
+        SELECT 
+            num_licitacion as value,
+            num_licitacion as label
+        FROM vOrdenes_compra
+        WHERE 1=1 ${whereQuery}
+        GROUP BY num_licitacion
+        ORDER BY num_licitacion DESC
+      `
+
+			const replacements = {
+				ejercicio: query?.ejercicio || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getOrderEjercicio({}: functionProps) {
+		try {
+			const queryString = `
+        SELECT 
+            año as value,
+            año as label
+        FROM vOrdenes_compra
+        GROUP BY año
+        ORDER BY año DESC
       `
 
 			const data = await DataService.read(queryString)
@@ -103,12 +189,48 @@ class Data {
 		}
 	}
 
+	async getOrderCodArticulo({ query }: functionProps) {
+		try {
+			let whereQuery = ""
+
+			if (query?.ejercicio) {
+				whereQuery = `AND año = :ejercicio`
+			}
+
+			if (query?.num_licitacion) {
+				whereQuery += ` AND num_licitacion = :num_licitacion`
+			}
+
+			const queryString = `
+        SELECT 
+          top 5000
+            cod_bar_mc_pr as value,
+            cod_bar_mc_pr as label
+        FROM vOrdenes_compra
+        WHERE 1=1 ${whereQuery}
+        GROUP BY cod_bar_mc_pr
+        ORDER BY cod_bar_mc_pr DESC
+      `
+
+			const replacements: any = {
+				ejercicio: query?.ejercicio || null,
+				num_licitacion: query?.num_licitacion || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
 	async vContratos_adquisiciones({ body }: functionProps) {
 		const { num_licitacion, cod_bar_mc_pr, ejercicio } = body || {}
-		console.log(
-			"🚀 > data.controller.ts:108 > Data > vContratos_adquisiciones > body:",
-			body
-		)
 
 		try {
 			let whereClause = ""
@@ -162,17 +284,37 @@ class Data {
 		}
 	}
 
-	async vOrdenes_compra({ query, params }: functionProps) {
+	async vOrdenes_compra({ body }: functionProps) {
+		const { num_licitacion, cod_bar_mc_pr, ejercicio } = body || {}
 		try {
+			let whereClause = ""
+
+			if (num_licitacion) {
+				whereClause += ` AND num_licitacion = :num_licitacion`
+			}
+
+			if (cod_bar_mc_pr) {
+				whereClause += ` AND cod_bar_mc_pr = :cod_bar_mc_pr`
+			}
+
+			if (ejercicio) {
+				whereClause += ` AND año = :ejercicio`
+			}
+
 			const queryString = `
         SELECT 
-          TOP 25000
           *,
           CONVERT(VARCHAR(10), fecha_envio, 103) as fecha_envio
         FROM vOrdenes_compra
+        where 1=1 ${whereClause}
+        ORDER BY año DESC
       `
 
-			const replacements = {}
+			const replacements = {
+				num_licitacion,
+				cod_bar_mc_pr,
+				ejercicio,
+			}
 
 			console.time("vOrdenes_compra")
 			const data = await DataService.read(queryString, replacements)

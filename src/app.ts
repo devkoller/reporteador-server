@@ -29,9 +29,9 @@ class App {
 
 		this.app.use(cors(environment.corsOptions))
 		this.app.use(helmet()) // Seguridad HTTP
-		this.app.use(
-			rateLimit(environment.limiter) // Limitación de tasa
-		)
+		// this.app.use(
+		// 	rateLimit(environment.limiter) // Limitación de tasa
+		// )
 
 		this.app.use(fileupload())
 

@@ -43,6 +43,42 @@ router.get(
 	}
 )
 
+router.get(
+	"/order/licitaciones",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getOrderNumLicitacion,
+		})
+	}
+)
+
+router.get(
+	"/order/articulos",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getOrderCodArticulo,
+		})
+	}
+)
+
+router.get(
+	"/order/ejercicios",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getOrderEjercicio,
+		})
+	}
+)
+
 router.post(
 	"/contracts",
 	[auth.verifyToken, auth.authorizeRouteAccess],
@@ -55,7 +91,7 @@ router.post(
 	}
 )
 
-router.get(
+router.post(
 	"/orders",
 	[auth.verifyToken, auth.authorizeRouteAccess],
 	(request: Request, response: Response) => {
