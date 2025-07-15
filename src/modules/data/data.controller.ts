@@ -128,6 +128,8 @@ class Data {
 			const queryString = `
         SELECT 
             *,
+            max - consumido as disponible,
+            maximo_dinero - consumo as disponible_dinero,
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
             CONVERT(VARCHAR(10), vigencia_inicio, 103) as vigencia_inicio
@@ -165,7 +167,8 @@ class Data {
 			const queryString = `
         SELECT 
           TOP 25000
-          * 
+          *,
+          CONVERT(VARCHAR(10), fecha_envio, 103) as fecha_envio
         FROM vOrdenes_compra
       `
 
