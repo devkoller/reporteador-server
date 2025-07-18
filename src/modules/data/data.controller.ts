@@ -49,7 +49,7 @@ class Data {
         SELECT 
             num_licitacion as value,
             num_licitacion as label
-        FROM vContratos_adquisiciones
+        FROM vContratos_adquisiciones_2
         WHERE 1=1 ${whereQuery}
         GROUP BY num_licitacion
         ORDER BY num_licitacion DESC
@@ -77,7 +77,7 @@ class Data {
         SELECT 
             ejercicio as value,
             ejercicio as label
-        FROM vContratos_adquisiciones
+        FROM vContratos_adquisiciones_2
         GROUP BY ejercicio
         ORDER BY ejercicio DESC
       `
@@ -110,7 +110,7 @@ class Data {
         SELECT 
             cod_bar_mc_pr as value,
             cod_bar_mc_pr as label
-        FROM vContratos_adquisiciones
+        FROM vContratos_adquisiciones_2
         WHERE 1=1 ${whereQuery}
         GROUP BY cod_bar_mc_pr
         ORDER BY cod_bar_mc_pr DESC
@@ -255,14 +255,10 @@ class Data {
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
             CONVERT(VARCHAR(10), vigencia_inicio, 103) as vigencia_inicio
-        FROM vContratos_adquisiciones
+        FROM vContratos_adquisiciones_2
         where 1=1 ${whereClause}
         order by proveedo_nom
       `
-			console.log(
-				"🚀 > data.controller.ts:58 > Data > vContratos_adquisiciones > queryString:",
-				queryString
-			)
 
 			const replacements = {
 				num_licitacion,
