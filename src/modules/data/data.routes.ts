@@ -32,6 +32,18 @@ router.get(
 )
 
 router.get(
+	"/proveedores",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getNumProv,
+		})
+	}
+)
+
+router.get(
 	"/ejercicios",
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
@@ -63,6 +75,18 @@ router.get(
 			request,
 			response,
 			callback: Data.getOrderCodArticulo,
+		})
+	}
+)
+
+router.get(
+	"/order/proveedores",
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getOrderProveedores,
 		})
 	}
 )

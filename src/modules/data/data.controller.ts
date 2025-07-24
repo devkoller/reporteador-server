@@ -24,10 +24,12 @@ interface functionProps {
 class Data {
 	constructor() {
 		this.vContratos_adquisiciones = this.vContratos_adquisiciones.bind(this)
+		this.vSuficiencia = this.vSuficiencia.bind(this)
+
 		this.getNumLicitacion = this.getNumLicitacion.bind(this)
+		this.getNumProv = this.getNumProv.bind(this)
 		this.getEjercicio = this.getEjercicio.bind(this)
 		this.getCodArticulo = this.getCodArticulo.bind(this)
-		this.vSuficiencia = this.vSuficiencia.bind(this)
 
 		this.pdfReport = this.pdfReport.bind(this)
 		this.getData = this.getData.bind(this)
@@ -36,6 +38,7 @@ class Data {
 		this.getOrderEjercicio = this.getOrderEjercicio.bind(this)
 		this.getOrderCodArticulo = this.getOrderCodArticulo.bind(this)
 		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
+		this.getOrderProveedores = this.getOrderProveedores.bind(this)
 	}
 
 	async getNumLicitacion({ query }: functionProps) {
@@ -57,6 +60,44 @@ class Data {
 
 			const replacements = {
 				ejercicio: query?.ejercicio || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getNumProv({ query }: functionProps) {
+		try {
+			let whereQuery = ""
+			if (query?.ejercicio) {
+				whereQuery = `AND ejercicio = :ejercicio`
+			}
+
+			if (query?.num_licitacion) {
+				whereQuery += ` AND num_licitacion = :num_licitacion`
+			}
+
+			const queryString = `
+        SELECT 
+            proveedo_nom as value,
+            proveedo_nom as label
+        FROM vContratos_adquisiciones_2
+        WHERE 1=1 ${whereQuery}
+        GROUP BY proveedo_nom
+        ORDER BY proveedo_nom DESC
+      `
+
+			const replacements: any = {
+				ejercicio: query?.ejercicio || null,
+				num_licitacion: query?.num_licitacion || null,
 			}
 
 			const data = await DataService.read(queryString, replacements)
@@ -106,6 +147,10 @@ class Data {
 				whereQuery += ` AND num_licitacion = :num_licitacion`
 			}
 
+			if (query?.proveedo_nom) {
+				whereQuery += ` AND proveedo_nom = :proveedo_nom`
+			}
+
 			const queryString = `
         SELECT 
             cod_bar_mc_pr as value,
@@ -119,6 +164,7 @@ class Data {
 			const replacements: any = {
 				ejercicio: query?.ejercicio || null,
 				num_licitacion: query?.num_licitacion || null,
+				proveedo_nom: query?.proveedo_nom || null,
 			}
 
 			const data = await DataService.read(queryString, replacements)
@@ -201,6 +247,10 @@ class Data {
 				whereQuery += ` AND num_licitacion = :num_licitacion`
 			}
 
+			if (query?.proveedo_nom) {
+				whereQuery += ` AND proveedo_nom = :proveedo_nom`
+			}
+
 			const queryString = `
         SELECT 
           top 5000
@@ -210,6 +260,47 @@ class Data {
         WHERE 1=1 ${whereQuery}
         GROUP BY cod_bar_mc_pr
         ORDER BY cod_bar_mc_pr DESC
+      `
+
+			const replacements: any = {
+				ejercicio: query?.ejercicio || null,
+				num_licitacion: query?.num_licitacion || null,
+				proveedo_nom: query?.proveedo_nom || null,
+			}
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: "Datas read successfully",
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getOrderProveedores({ query }: functionProps) {
+		try {
+			let whereQuery = ""
+
+			if (query?.ejercicio) {
+				whereQuery = `AND año = :ejercicio`
+			}
+
+			if (query?.num_licitacion) {
+				whereQuery += ` AND num_licitacion = :num_licitacion`
+			}
+
+			const queryString = `
+        SELECT 
+          top 5000
+            proveedo_nom as value,
+            proveedo_nom as label
+        FROM vOrdenes_compra
+        WHERE 1=1 ${whereQuery}
+        GROUP BY proveedo_nom
+        ORDER BY proveedo_nom DESC
       `
 
 			const replacements: any = {
