@@ -321,7 +321,8 @@ class Data {
 	}
 
 	async vContratos_adquisiciones({ body }: functionProps) {
-		const { num_licitacion, cod_bar_mc_pr, ejercicio } = body || {}
+		const { num_licitacion, cod_bar_mc_pr, ejercicio, proveedo_num } =
+			body || {}
 
 		try {
 			let whereClause = ""
@@ -336,6 +337,10 @@ class Data {
 
 			if (ejercicio) {
 				whereClause += ` AND ejercicio = :ejercicio`
+			}
+
+			if (proveedo_num) {
+				whereClause += ` AND proveedo_num = :proveedo_num`
 			}
 
 			const queryString = `
@@ -355,6 +360,7 @@ class Data {
 				num_licitacion,
 				cod_bar_mc_pr,
 				ejercicio,
+				proveedo_num,
 			}
 
 			console.time("vContratos_adquisiciones")
@@ -372,7 +378,8 @@ class Data {
 	}
 
 	async vOrdenes_compra({ body }: functionProps) {
-		const { num_licitacion, cod_bar_mc_pr, ejercicio } = body || {}
+		const { num_licitacion, cod_bar_mc_pr, ejercicio, proveedo_num } =
+			body || {}
 		try {
 			let whereClause = ""
 
@@ -386,6 +393,10 @@ class Data {
 
 			if (ejercicio) {
 				whereClause += ` AND año = :ejercicio`
+			}
+
+			if (proveedo_num) {
+				whereClause += ` AND proveedo_num = :proveedo_num`
 			}
 
 			const queryString = `
