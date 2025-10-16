@@ -321,11 +321,23 @@ class Data {
 	}
 
 	async vContratos_adquisiciones({ body }: functionProps) {
-		const { num_licitacion, cod_bar_mc_pr, ejercicio, proveedo_nom } =
+		const { num_licitacion, cod_bar_mc_pr, ejercicio, proveedo_nom, buscador } =
 			body || {}
 
 		try {
 			let whereClause = ''
+
+			// Columns a buscar: si alguna es numérica, CAST a VARCHAR
+			const searchMap: Record<string, string> = {
+				num_licitacion: 'num_licitacion',
+				cod_bar_mc_pr: 'cod_bar_mc_pr',
+				ejercicio: 'CAST(ejercicio AS VARCHAR(4))',
+				proveedo_nom: 'proveedo_nom',
+				art_mc_nom: 'art_mc_nom',
+				unidad: 'unidad',
+				cta_contable: 'cta_contable',
+				// agrega más columnas aquí...
+			}
 
 			if (num_licitacion) {
 				whereClause += ` AND num_licitacion = :num_licitacion`
@@ -342,11 +354,45 @@ class Data {
 			if (proveedo_nom) {
 				whereClause += ` AND proveedo_nom = :proveedo_nom`
 			}
+			const replacements: { [key: string]: any } = {
+				num_licitacion,
+				cod_bar_mc_pr,
+				ejercicio,
+				proveedo_nom,
+			}
+
+			console.log('buscador', buscador)
+			// Normaliza y separa el buscador en palabras
+			const tokens = (buscador || '')
+				.trim()
+				.replace(/\s+/g, ' ')
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 6) // límite sano de palabras
+
+			if (tokens.length) {
+				// Por cada token, armamos (col1 LIKE :b0 OR col2 LIKE :b0 ...)
+				const groups: string[] = []
+
+				tokens.forEach((tok: string, i: number) => {
+					const likeKey = `b${i}`
+					// ORs por columna (collation para que sea case/accent-insensitive en SQL Server)
+					const ors = Object.values(searchMap).map(
+						(expr) => `${expr} COLLATE Latin1_General_CI_AI LIKE :${likeKey}`
+					)
+					groups.push(`(${ors.join(' OR ')})`)
+					// %token% en replacements
+					replacements[likeKey] = `%${tok}%`
+				})
+
+				// AND entre grupos para exigir que aparezcan todas las palabras
+				whereClause += ` AND ${groups.join(' AND ')}`
+			}
 
 			const queryString = `
         SELECT 
             *,
-            max - consumido + ampliado + reasignada as disponible,
+            max - consumido + ampliado - reservada + reasignada as disponible,
             maximo_dinero - consumo as disponible_dinero,
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
@@ -355,14 +401,6 @@ class Data {
         where 1=1 ${whereClause}
         order by proveedo_nom
       `
-
-			const replacements = {
-				num_licitacion,
-				cod_bar_mc_pr,
-				ejercicio,
-				proveedo_nom,
-			}
-
 			console.time('vContratos_adquisiciones')
 			const data = await DataService.read(queryString, replacements)
 			console.timeEnd('vContratos_adquisiciones')
