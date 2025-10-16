@@ -105,7 +105,7 @@ router.get(
 
 router.post(
 	"/contracts",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,
@@ -117,7 +117,7 @@ router.post(
 
 router.post(
 	"/orders",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,
@@ -129,7 +129,7 @@ router.post(
 
 router.get(
 	"/sufficiencies",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,

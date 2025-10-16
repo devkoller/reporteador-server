@@ -1,7 +1,7 @@
 module.exports = {
 	apps: [
 		{
-			name: "sigma-server",
+			name: "api-reportes-server",
 			script: "dist/server.js",
 			ignore_watch: ["node_modules", "public/imgs"],
 			watch: false,

@@ -346,7 +346,7 @@ class Data {
 			const queryString = `
         SELECT 
             *,
-            max - consumido as disponible,
+            max - consumido + ampliado + reasignada as disponible,
             maximo_dinero - consumo as disponible_dinero,
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
