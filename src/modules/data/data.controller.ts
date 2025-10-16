@@ -1,11 +1,11 @@
-import DataService from './data.service'
-import { DuckDB } from '@/core'
-import { getAgeGroup, helpers } from '@/core/utils/functions'
-import fs from 'fs'
-import path from 'path'
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
+import DataService from "./data.service"
+import { DuckDB } from "@/core"
+import { getAgeGroup, helpers } from "@/core/utils/functions"
+import fs from "fs"
+import path from "path"
+import { ChartJSNodeCanvas } from "chartjs-node-canvas"
 
-const client = require('@jsreport/nodejs-client')(
+const client = require("@jsreport/nodejs-client")(
 	process.env.JSREPORT_URL,
 	process.env.JSREPORT_USER,
 	process.env.JSREPORT_PASSWORD
@@ -43,7 +43,7 @@ class Data {
 
 	async getNumLicitacion({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
 			}
@@ -66,7 +66,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -76,7 +76,7 @@ class Data {
 
 	async getNumProv({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
 			}
@@ -104,7 +104,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -127,7 +127,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -137,7 +137,7 @@ class Data {
 
 	async getCodArticulo({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
@@ -171,7 +171,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -181,7 +181,7 @@ class Data {
 
 	async getOrderNumLicitacion({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
 			}
@@ -204,7 +204,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -227,7 +227,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -237,7 +237,7 @@ class Data {
 
 	async getOrderCodArticulo({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
@@ -272,7 +272,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -282,7 +282,7 @@ class Data {
 
 	async getOrderProveedores({ query }: functionProps) {
 		try {
-			let whereQuery = ''
+			let whereQuery = ""
 
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
@@ -312,7 +312,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -392,11 +392,7 @@ class Data {
 			const queryString = `
         SELECT 
             *,
-<<<<<<< HEAD
-            max - consumido + ampliado + reasignada as disponible,
-=======
             max - consumido + ampliado - reservada + reasignada as disponible,
->>>>>>> 5044b607b32281b74118808f20b8446d17094b46
             maximo_dinero - consumo as disponible_dinero,
             CONVERT(VARCHAR(10), fecha, 103) as fecha,
             CONVERT(VARCHAR(10), vigencia_fin, 103) as vigencia_fin,
@@ -405,13 +401,14 @@ class Data {
         where 1=1 ${whereClause}
         order by proveedo_nom
       `
-			console.time('vContratos_adquisiciones')
+
+			console.time("vContratos_adquisiciones")
 			const data = await DataService.read(queryString, replacements)
-			console.timeEnd('vContratos_adquisiciones')
+			console.timeEnd("vContratos_adquisiciones")
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data,
 			}
 		} catch (error) {
@@ -542,7 +539,7 @@ class Data {
 				.map((col: any) => {
 					return `<th class="border border-zinc-300 py-1 px-1 text-center">${col.header}</th>`
 				})
-				.join('\n')
+				.join("\n")
 
 			const replacedColumnsString = columns
 				.map((col: any) => {
@@ -550,37 +547,37 @@ class Data {
           {{formatText ${col.accessorKey}}}
           </td>`
 				})
-				.join('\n')
+				.join("\n")
 
 			const main = fs.readFileSync(
-				path.join(__dirname, '../../../src/reports/html/report.html'),
-				'utf8'
+				path.join(__dirname, "../../../src/reports/html/report.html"),
+				"utf8"
 			)
 
 			const mainExcel = fs.readFileSync(
-				path.join(__dirname, '../../../src/reports/html/reportToExcel.html'),
-				'utf8'
+				path.join(__dirname, "../../../src/reports/html/reportToExcel.html"),
+				"utf8"
 			)
 
 			const logo = fs.readFileSync(
-				path.join(__dirname, '../../../src/reports/assets/hcg.png')
+				path.join(__dirname, "../../../src/reports/assets/hcg.png")
 			)
 
 			const chartImages: any = []
 
 			for (let element of charts) {
 				const charter = new ChartJSNodeCanvas({
-					width: element.type === 'bar' ? 1000 : 400,
-					height: element.type === 'bar' ? 400 : 300,
+					width: element.type === "bar" ? 1000 : 400,
+					height: element.type === "bar" ? 400 : 300,
 				})
 				const counts: Record<string, number> = {}
 				filteredData.forEach((item: any) => {
-					let rawVal = (item[element.key] as any) || ''
+					let rawVal = (item[element.key] as any) || ""
 
-					if (element.key === 'AgeGroup') {
-						rawVal = getAgeGroup(item['fecha_nac'])
+					if (element.key === "AgeGroup") {
+						rawVal = getAgeGroup(item["fecha_nac"])
 					}
-					if (rawVal === '0') {
+					if (rawVal === "0") {
 						return
 					}
 					counts[rawVal] = (counts[rawVal] || 0) + 1
@@ -601,12 +598,12 @@ class Data {
 						],
 					},
 					options:
-						element.type === 'pie'
+						element.type === "pie"
 							? {
 									responsive: false, // en Node no hay "ventana" que responda
 									plugins: {
 										legend: {
-											position: 'top',
+											position: "top",
 											labels: {
 												// Genera cada etiqueta manualmente
 												generateLabels: (chart: any) => {
@@ -654,37 +651,37 @@ class Data {
 			})
 
 			const html = main
-				.replace('*columns*', columnsString)
-				.replace('*replacedColumns*', replacedColumnsString)
-				.replace('*hcg*', logo.toString('base64'))
+				.replace("*columns*", columnsString)
+				.replace("*replacedColumns*", replacedColumnsString)
+				.replace("*hcg*", logo.toString("base64"))
 
 			const htmlExcel = mainExcel
-				.replace('*columns*', columnsString)
-				.replace('*replacedColumns*', replacedColumnsString)
-				.replace('*hcg*', logo.toString('base64'))
+				.replace("*columns*", columnsString)
+				.replace("*replacedColumns*", replacedColumnsString)
+				.replace("*hcg*", logo.toString("base64"))
 
 			const reportStream = await client
 				.render({
 					template: {
 						content: html,
-						engine: 'handlebars',
-						recipe: 'chrome-pdf',
+						engine: "handlebars",
+						recipe: "chrome-pdf",
 						helpers: helpers(),
 						chrome: {
-							marginTop: '1cm',
-							marginBottom: '2cm',
-							marginLeft: '1cm',
-							marginRight: '1cm',
-							format: 'letter',
+							marginTop: "1cm",
+							marginBottom: "2cm",
+							marginLeft: "1cm",
+							marginRight: "1cm",
+							format: "letter",
 							landscape: true,
 						},
 					},
 					data: {
 						title,
-						date: new Date().toLocaleDateString('es-ES', {
-							day: '2-digit',
-							month: '2-digit',
-							year: 'numeric',
+						date: new Date().toLocaleDateString("es-ES", {
+							day: "2-digit",
+							month: "2-digit",
+							year: "numeric",
 						}),
 						servicios: serviciosCount,
 						...filteredDataString,
@@ -701,17 +698,17 @@ class Data {
 				.render({
 					template: {
 						content: htmlExcel,
-						engine: 'handlebars',
-						recipe: 'html-to-xlsx',
+						engine: "handlebars",
+						recipe: "html-to-xlsx",
 						helpers: helpers(),
 						chrome: {},
 					},
 					data: {
 						title,
-						date: new Date().toLocaleDateString('es-ES', {
-							day: '2-digit',
-							month: '2-digit',
-							year: 'numeric',
+						date: new Date().toLocaleDateString("es-ES", {
+							day: "2-digit",
+							month: "2-digit",
+							year: "numeric",
 						}),
 						rows: filteredData,
 						...filteredDataString,
@@ -728,23 +725,23 @@ class Data {
 			const chunksExcel: any = []
 
 			let base64 = await new Promise((resolve, reject) => {
-				reportStream.on('data', (chunk: any) => chunks.push(chunk))
-				reportStream.on('end', () => {
+				reportStream.on("data", (chunk: any) => chunks.push(chunk))
+				reportStream.on("end", () => {
 					const buffer = Buffer.concat(chunks)
-					const base64 = buffer.toString('base64')
+					const base64 = buffer.toString("base64")
 					resolve(base64)
 				})
-				reportStream.on('error', reject)
+				reportStream.on("error", reject)
 			})
 
 			let base64Excel = await new Promise((resolve, reject) => {
-				reportExcelStream.on('data', (chunk: any) => chunksExcel.push(chunk))
-				reportExcelStream.on('end', () => {
+				reportExcelStream.on("data", (chunk: any) => chunksExcel.push(chunk))
+				reportExcelStream.on("end", () => {
 					const buffer = Buffer.concat(chunksExcel)
-					const base64 = buffer.toString('base64')
+					const base64 = buffer.toString("base64")
 					resolve(base64)
 				})
-				reportExcelStream.on('error', reject)
+				reportExcelStream.on("error", reject)
 			})
 
 			// const reportKey = type as keyof typeof functionsDataReports
@@ -756,7 +753,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: 'Datas read successfully',
+				message: "Datas read successfully",
 				data: {
 					pdf: base64,
 					excel: base64Excel,
@@ -784,9 +781,9 @@ class Data {
 			const filteredData = data.filter((item: any) => {
 				// 1) exact-match include/exclude
 				for (const key of filterableKeys) {
-					let rawVal = (item[key] as any) || ''
-					if (key === 'AgeGroup') {
-						rawVal = getAgeGroup(item['fecha_nac'])
+					let rawVal = (item[key] as any) || ""
+					if (key === "AgeGroup") {
+						rawVal = getAgeGroup(item["fecha_nac"])
 					}
 					const val = String(rawVal)
 
@@ -849,7 +846,7 @@ class Data {
 						return filterValues.map((value: any) => {
 							return {
 								key,
-								filterType: filterType === 'include' ? 'Incluye' : 'Excluye',
+								filterType: filterType === "include" ? "Incluye" : "Excluye",
 								value,
 							}
 						})
@@ -881,7 +878,7 @@ class Data {
 					if (filterValues) {
 						return {
 							key,
-							filterType: filterType === 'include' ? 'Incluye' : 'Excluye',
+							filterType: filterType === "include" ? "Incluye" : "Excluye",
 							value: filterValues,
 						}
 					}
