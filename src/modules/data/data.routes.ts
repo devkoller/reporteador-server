@@ -1,14 +1,14 @@
-import { Router } from "express"
-import { Request, Response } from "express"
-import { callback } from "@/core"
-import Data from "./data.controller"
+import { Router } from 'express'
+import { Request, Response } from 'express'
+import { callback } from '@/core'
+import Data from './data.controller'
 
-import { auth } from "@/middlewares/"
+import { auth } from '@/middlewares/'
 
 const router = Router()
 
 router.get(
-	"/licitaciones",
+	'/licitaciones',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -20,7 +20,7 @@ router.get(
 )
 
 router.get(
-	"/articulos",
+	'/articulos',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -32,7 +32,7 @@ router.get(
 )
 
 router.get(
-	"/proveedores",
+	'/proveedores',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -44,7 +44,7 @@ router.get(
 )
 
 router.get(
-	"/ejercicios",
+	'/ejercicios',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -56,7 +56,7 @@ router.get(
 )
 
 router.get(
-	"/order/licitaciones",
+	'/order/licitaciones',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -68,7 +68,7 @@ router.get(
 )
 
 router.get(
-	"/order/articulos",
+	'/order/articulos',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -80,7 +80,7 @@ router.get(
 )
 
 router.get(
-	"/order/proveedores",
+	'/order/proveedores',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -92,7 +92,7 @@ router.get(
 )
 
 router.get(
-	"/order/ejercicios",
+	'/order/ejercicios',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
@@ -104,8 +104,8 @@ router.get(
 )
 
 router.post(
-	"/contracts",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	'/contracts',
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,
@@ -116,8 +116,8 @@ router.post(
 )
 
 router.post(
-	"/orders",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	'/orders',
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,
@@ -128,8 +128,8 @@ router.post(
 )
 
 router.get(
-	"/sufficiencies",
-	[auth.verifyToken, auth.authorizeRouteAccess],
+	'/sufficiencies',
+	[auth.verifyToken],
 	(request: Request, response: Response) => {
 		callback({
 			request,
@@ -139,7 +139,7 @@ router.get(
 	}
 )
 
-router.post("/report/pdf", [], (request: Request, response: Response) => {
+router.post('/report/pdf', [], (request: Request, response: Response) => {
 	callback({
 		request,
 		response,

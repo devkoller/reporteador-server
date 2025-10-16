@@ -4,7 +4,9 @@
 	"description": "",
 	"main": "./src/server.ts",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"dev": "concurrently \"tsc --watch\" \"nodemon src/server.ts\"",
+		"start": "tsx src/server.ts",
+		"build": "tsc"
 	},
 	"_moduleAliases": {
 		"@": "dist"
@@ -39,7 +41,12 @@
 		"@types/jsonwebtoken": "^9.0.9",
 		"@types/node": "^22.15.17",
 		"@types/nodemailer": "^6.4.17",
+		"concurrently": "^9.2.0",
+		"nodemon": "^3.1.10",
 		"sequelize-cli": "^6.6.3",
-		"typescript": "^5.8.3"
+		"ts-node": "^10.9.2",
+		"tsc-watch": "^7.1.1",
+		"tsx": "^4.20.3",
+		"typescript": "^5.9.2"
 	}
 }
