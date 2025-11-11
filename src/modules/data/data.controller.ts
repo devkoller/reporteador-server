@@ -1,11 +1,11 @@
-import DataService from "./data.service"
-import { DuckDB } from "@/core"
-import { getAgeGroup, helpers } from "@/core/utils/functions"
-import fs from "fs"
-import path from "path"
-import { ChartJSNodeCanvas } from "chartjs-node-canvas"
+import DataService from './data.service'
+import { DuckDB } from '@/core'
+import { getAgeGroup, helpers } from '@/core/utils/functions'
+import fs from 'fs'
+import path from 'path'
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
 
-const client = require("@jsreport/nodejs-client")(
+const client = require('@jsreport/nodejs-client')(
 	process.env.JSREPORT_URL,
 	process.env.JSREPORT_USER,
 	process.env.JSREPORT_PASSWORD
@@ -39,11 +39,12 @@ class Data {
 		this.getOrderCodArticulo = this.getOrderCodArticulo.bind(this)
 		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
 		this.getOrderProveedores = this.getOrderProveedores.bind(this)
+		this.getContractsReport = this.getContractsReport.bind(this)
 	}
 
 	async getNumLicitacion({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
 			}
@@ -66,7 +67,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -76,7 +77,7 @@ class Data {
 
 	async getNumProv({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
 			}
@@ -104,7 +105,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -127,7 +128,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -137,7 +138,7 @@ class Data {
 
 	async getCodArticulo({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 
 			if (query?.ejercicio) {
 				whereQuery = `AND ejercicio = :ejercicio`
@@ -171,7 +172,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -181,7 +182,7 @@ class Data {
 
 	async getOrderNumLicitacion({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
 			}
@@ -204,7 +205,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -227,7 +228,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -237,7 +238,7 @@ class Data {
 
 	async getOrderCodArticulo({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
@@ -272,7 +273,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -282,7 +283,7 @@ class Data {
 
 	async getOrderProveedores({ query }: functionProps) {
 		try {
-			let whereQuery = ""
+			let whereQuery = ''
 
 			if (query?.ejercicio) {
 				whereQuery = `AND año = :ejercicio`
@@ -312,7 +313,65 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getContractsReport({ body }: functionProps) {
+		try {
+			let whereQuery = ''
+
+			console.log('query', body)
+
+			if (body?.ejercicio) {
+				whereQuery = `AND c.ejercicio = :ejercicio`
+			}
+
+			const queryString = `
+				SELECT c.cta_contable as partida, c.ejercicio as anio, c.num_licitacion, c.unidad as uh, c.unid_hosp_pk, c.proveedo_nom, c.cod_bar_mc_pr as codigo
+				, c.art_mc_nom as articulo, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada
+				,  max - consumido + ampliado - reservada + reasignada as disponible_contrato
+				, max + ampliado + reasignada as maximo_cm
+				, c.precio_ci
+				, c.precio_ci * c.max as importe_maximo_ci
+				, c.precio_ci * (c.max + c.reasignada + ampliado) as importe_maximo_movimientos_ci
+				, c.precio_ci * (max - consumido + ampliado - reservada + reasignada) as importe_disponible_ci
+				, space(10) as spacer
+				, sum(o.ped_pendiente) as pendiente_en_oc, sum(o.PED_RECIBIDO) as recibido_en_oc, SUM(O.CANTIDAD_PED) AS cantidad_en_oc
+				, SUM(O.CANTIDAD_CONVERTIDA) AS cantidad_convertida_en_oc
+				, CAST(o.pza_pres AS DECIMAL(12,2)) as factor_conversion
+				, sum(o.monto_recibido) as monto_recibido, sum(o.monto_pendiente) as monto_pendiente, sum(monto_cancelado) as monto_cancelado
+				,  sum(o.monto_recibido) + sum(o.monto_pendiente)  as monto_total
+				, CAST(LEFT(CAST(c.cta_contable as varchar), 1) + '000' AS INT) AS capitulo
+				, (c.precio_ci * (c.max + c.reasignada + ampliado)) -  (sum(o.monto_recibido) + sum(o.monto_pendiente)) as importe_disponible_contrato
+				FROM hcg_cgi.dbo.vContratos_adquisiciones_2 c
+				INNER JOIN hcg_cgi.dbo.vOrdenes_compra_pedidosbzu o ON o.id_contrato_pk = c.contrato_pk AND o.num_uh = c.unid_hosp_pk AND c.cod_art_mc_pk = o.cod_art_mc_pk and o.año = c.ejercicio
+				WHERE 1 = 1 ${whereQuery}
+				GROUP BY c.precio_ci, c.cta_contable, c.ejercicio,c.num_licitacion, c.unidad, c.unid_hosp_pk, c.proveedo_nom, c.cod_art_mc_pk, c.cod_bar_mc_pr, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada, o.status_orden
+				, pza_pres, c.art_mc_nom
+				ORDER BY partida, c.num_licitacion, c.proveedo_nom, c.cod_art_mc_pk
+				--and o.observaciones like '%ampliaci%' AND YEAR(o.fecha_envio) = 2025
+				--WHERE c.ejercicio = 2024
+				--and unid_hosp_pk = 5
+				--and cod_art_mc_pr = '2551005001'
+      `
+
+			const replacements: any = {
+				ejercicio: body?.ejercicio || null,
+				// num_licitacion: query?.num_licitacion || null,
+			}
+
+			console.log('queryString', queryString)
+
+			const data = await DataService.read(queryString, replacements)
+
+			return {
+				status: 200,
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -402,13 +461,13 @@ class Data {
         order by proveedo_nom
       `
 
-			console.time("vContratos_adquisiciones")
+			console.time('vContratos_adquisiciones')
 			const data = await DataService.read(queryString, replacements)
-			console.timeEnd("vContratos_adquisiciones")
+			console.timeEnd('vContratos_adquisiciones')
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data,
 			}
 		} catch (error) {
@@ -539,7 +598,7 @@ class Data {
 				.map((col: any) => {
 					return `<th class="border border-zinc-300 py-1 px-1 text-center">${col.header}</th>`
 				})
-				.join("\n")
+				.join('\n')
 
 			const replacedColumnsString = columns
 				.map((col: any) => {
@@ -547,37 +606,37 @@ class Data {
           {{formatText ${col.accessorKey}}}
           </td>`
 				})
-				.join("\n")
+				.join('\n')
 
 			const main = fs.readFileSync(
-				path.join(__dirname, "../../../src/reports/html/report.html"),
-				"utf8"
+				path.join(__dirname, '../../../src/reports/html/report.html'),
+				'utf8'
 			)
 
 			const mainExcel = fs.readFileSync(
-				path.join(__dirname, "../../../src/reports/html/reportToExcel.html"),
-				"utf8"
+				path.join(__dirname, '../../../src/reports/html/reportToExcel.html'),
+				'utf8'
 			)
 
 			const logo = fs.readFileSync(
-				path.join(__dirname, "../../../src/reports/assets/hcg.png")
+				path.join(__dirname, '../../../src/reports/assets/hcg.png')
 			)
 
 			const chartImages: any = []
 
 			for (let element of charts) {
 				const charter = new ChartJSNodeCanvas({
-					width: element.type === "bar" ? 1000 : 400,
-					height: element.type === "bar" ? 400 : 300,
+					width: element.type === 'bar' ? 1000 : 400,
+					height: element.type === 'bar' ? 400 : 300,
 				})
 				const counts: Record<string, number> = {}
 				filteredData.forEach((item: any) => {
-					let rawVal = (item[element.key] as any) || ""
+					let rawVal = (item[element.key] as any) || ''
 
-					if (element.key === "AgeGroup") {
-						rawVal = getAgeGroup(item["fecha_nac"])
+					if (element.key === 'AgeGroup') {
+						rawVal = getAgeGroup(item['fecha_nac'])
 					}
-					if (rawVal === "0") {
+					if (rawVal === '0') {
 						return
 					}
 					counts[rawVal] = (counts[rawVal] || 0) + 1
@@ -598,12 +657,12 @@ class Data {
 						],
 					},
 					options:
-						element.type === "pie"
+						element.type === 'pie'
 							? {
 									responsive: false, // en Node no hay "ventana" que responda
 									plugins: {
 										legend: {
-											position: "top",
+											position: 'top',
 											labels: {
 												// Genera cada etiqueta manualmente
 												generateLabels: (chart: any) => {
@@ -651,37 +710,37 @@ class Data {
 			})
 
 			const html = main
-				.replace("*columns*", columnsString)
-				.replace("*replacedColumns*", replacedColumnsString)
-				.replace("*hcg*", logo.toString("base64"))
+				.replace('*columns*', columnsString)
+				.replace('*replacedColumns*', replacedColumnsString)
+				.replace('*hcg*', logo.toString('base64'))
 
 			const htmlExcel = mainExcel
-				.replace("*columns*", columnsString)
-				.replace("*replacedColumns*", replacedColumnsString)
-				.replace("*hcg*", logo.toString("base64"))
+				.replace('*columns*', columnsString)
+				.replace('*replacedColumns*', replacedColumnsString)
+				.replace('*hcg*', logo.toString('base64'))
 
 			const reportStream = await client
 				.render({
 					template: {
 						content: html,
-						engine: "handlebars",
-						recipe: "chrome-pdf",
+						engine: 'handlebars',
+						recipe: 'chrome-pdf',
 						helpers: helpers(),
 						chrome: {
-							marginTop: "1cm",
-							marginBottom: "2cm",
-							marginLeft: "1cm",
-							marginRight: "1cm",
-							format: "letter",
+							marginTop: '1cm',
+							marginBottom: '2cm',
+							marginLeft: '1cm',
+							marginRight: '1cm',
+							format: 'letter',
 							landscape: true,
 						},
 					},
 					data: {
 						title,
-						date: new Date().toLocaleDateString("es-ES", {
-							day: "2-digit",
-							month: "2-digit",
-							year: "numeric",
+						date: new Date().toLocaleDateString('es-ES', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric',
 						}),
 						servicios: serviciosCount,
 						...filteredDataString,
@@ -698,17 +757,17 @@ class Data {
 				.render({
 					template: {
 						content: htmlExcel,
-						engine: "handlebars",
-						recipe: "html-to-xlsx",
+						engine: 'handlebars',
+						recipe: 'html-to-xlsx',
 						helpers: helpers(),
 						chrome: {},
 					},
 					data: {
 						title,
-						date: new Date().toLocaleDateString("es-ES", {
-							day: "2-digit",
-							month: "2-digit",
-							year: "numeric",
+						date: new Date().toLocaleDateString('es-ES', {
+							day: '2-digit',
+							month: '2-digit',
+							year: 'numeric',
 						}),
 						rows: filteredData,
 						...filteredDataString,
@@ -725,23 +784,23 @@ class Data {
 			const chunksExcel: any = []
 
 			let base64 = await new Promise((resolve, reject) => {
-				reportStream.on("data", (chunk: any) => chunks.push(chunk))
-				reportStream.on("end", () => {
+				reportStream.on('data', (chunk: any) => chunks.push(chunk))
+				reportStream.on('end', () => {
 					const buffer = Buffer.concat(chunks)
-					const base64 = buffer.toString("base64")
+					const base64 = buffer.toString('base64')
 					resolve(base64)
 				})
-				reportStream.on("error", reject)
+				reportStream.on('error', reject)
 			})
 
 			let base64Excel = await new Promise((resolve, reject) => {
-				reportExcelStream.on("data", (chunk: any) => chunksExcel.push(chunk))
-				reportExcelStream.on("end", () => {
+				reportExcelStream.on('data', (chunk: any) => chunksExcel.push(chunk))
+				reportExcelStream.on('end', () => {
 					const buffer = Buffer.concat(chunksExcel)
-					const base64 = buffer.toString("base64")
+					const base64 = buffer.toString('base64')
 					resolve(base64)
 				})
-				reportExcelStream.on("error", reject)
+				reportExcelStream.on('error', reject)
 			})
 
 			// const reportKey = type as keyof typeof functionsDataReports
@@ -753,7 +812,7 @@ class Data {
 
 			return {
 				status: 200,
-				message: "Datas read successfully",
+				message: 'Datas read successfully',
 				data: {
 					pdf: base64,
 					excel: base64Excel,
@@ -781,9 +840,9 @@ class Data {
 			const filteredData = data.filter((item: any) => {
 				// 1) exact-match include/exclude
 				for (const key of filterableKeys) {
-					let rawVal = (item[key] as any) || ""
-					if (key === "AgeGroup") {
-						rawVal = getAgeGroup(item["fecha_nac"])
+					let rawVal = (item[key] as any) || ''
+					if (key === 'AgeGroup') {
+						rawVal = getAgeGroup(item['fecha_nac'])
 					}
 					const val = String(rawVal)
 
@@ -846,7 +905,7 @@ class Data {
 						return filterValues.map((value: any) => {
 							return {
 								key,
-								filterType: filterType === "include" ? "Incluye" : "Excluye",
+								filterType: filterType === 'include' ? 'Incluye' : 'Excluye',
 								value,
 							}
 						})
@@ -878,7 +937,7 @@ class Data {
 					if (filterValues) {
 						return {
 							key,
-							filterType: filterType === "include" ? "Incluye" : "Excluye",
+							filterType: filterType === 'include' ? 'Incluye' : 'Excluye',
 							value: filterValues,
 						}
 					}
