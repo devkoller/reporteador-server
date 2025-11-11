@@ -348,11 +348,13 @@ class Data {
 				,  sum(o.monto_recibido) + sum(o.monto_pendiente)  as monto_total
 				, CAST(LEFT(CAST(c.cta_contable as varchar), 1) + '000' AS INT) AS capitulo
 				, (c.precio_ci * (c.max + c.reasignada + ampliado)) -  (sum(o.monto_recibido) + sum(o.monto_pendiente)) as importe_disponible_contrato
+				, c.presentacion, c.precio, c.marca, c.min, c.porcentaje
 				FROM hcg_cgi.dbo.vContratos_adquisiciones_2 c
 				INNER JOIN hcg_cgi.dbo.vOrdenes_compra_pedidosbzu o ON o.id_contrato_pk = c.contrato_pk AND o.num_uh = c.unid_hosp_pk AND c.cod_art_mc_pk = o.cod_art_mc_pk and o.año = c.ejercicio
 				WHERE 1 = 1 ${whereQuery}
 				GROUP BY c.precio_ci, c.cta_contable, c.ejercicio,c.num_licitacion, c.unidad, c.unid_hosp_pk, c.proveedo_nom, c.cod_art_mc_pk, c.cod_bar_mc_pr, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada, o.status_orden
 				, pza_pres, c.art_mc_nom
+				, c.presentacion, c.precio, c.marca, c.min, c.porcentaje
 				ORDER BY partida, c.num_licitacion, c.proveedo_nom, c.cod_art_mc_pk
 				--and o.observaciones like '%ampliaci%' AND YEAR(o.fecha_envio) = 2025
 				--WHERE c.ejercicio = 2024
