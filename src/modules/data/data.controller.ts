@@ -332,33 +332,66 @@ class Data {
 			}
 
 			const queryString = `
-				SELECT c.cta_contable as partida, c.ejercicio as anio, c.num_licitacion, c.unidad as uh, c.unid_hosp_pk, c.proveedo_nom, c.cod_bar_mc_pr as codigo
-				, c.art_mc_nom as articulo, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada
-				,  max - consumido + ampliado - reservada + reasignada as disponible_contrato
-				, max + ampliado + reasignada as maximo_cm
-				, c.precio_ci
-				, c.precio_ci * c.max as importe_maximo_ci
-				, c.precio_ci * (c.max + c.reasignada + ampliado) as importe_maximo_movimientos_ci
-				, c.precio_ci * (max - consumido + ampliado - reservada + reasignada) as importe_disponible_ci
-				, space(10) as spacer
-				, sum(o.ped_pendiente) as pendiente_en_oc, sum(o.PED_RECIBIDO) as recibido_en_oc, SUM(O.CANTIDAD_PED) AS cantidad_en_oc
-				, SUM(O.CANTIDAD_CONVERTIDA) AS cantidad_convertida_en_oc
-				, CAST(o.pza_pres AS DECIMAL(12,2)) as factor_conversion
-				, sum(o.monto_recibido) as monto_recibido, sum(o.monto_pendiente) as monto_pendiente, sum(monto_cancelado) as monto_cancelado
-				,  sum(o.monto_recibido) + sum(o.monto_pendiente)  as monto_total
-				, CAST(LEFT(CAST(c.cta_contable as varchar), 1) + '000' AS INT) AS capitulo
-				, (c.precio_ci * (c.max + c.reasignada + ampliado)) -  (sum(o.monto_recibido) + sum(o.monto_pendiente)) as importe_disponible_contrato
-				FROM hcg_cgi.dbo.vContratos_adquisiciones_2 c
-				INNER JOIN hcg_cgi.dbo.vOrdenes_compra_pedidosbzu o ON o.id_contrato_pk = c.contrato_pk AND o.num_uh = c.unid_hosp_pk AND c.cod_art_mc_pk = o.cod_art_mc_pk and o.año = c.ejercicio
-				WHERE 1 = 1 ${whereQuery}
-				GROUP BY c.precio_ci, c.cta_contable, c.ejercicio,c.num_licitacion, c.unidad, c.unid_hosp_pk, c.proveedo_nom, c.cod_art_mc_pk, c.cod_bar_mc_pr, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada, o.status_orden
-				, pza_pres, c.art_mc_nom
-				ORDER BY partida, c.num_licitacion, c.proveedo_nom, c.cod_art_mc_pk
-				--and o.observaciones like '%ampliaci%' AND YEAR(o.fecha_envio) = 2025
-				--WHERE c.ejercicio = 2024
-				--and unid_hosp_pk = 5
-				--and cod_art_mc_pr = '2551005001'
-      `
+			SELECT partida, anio, num_licitacion, uh, unid_hosp_pk, proveedo_nom, codigo, articulo, max, ampliado, consumido, reasignada, reservada, disponible_contrato, maximo_cm, precio_ci
+			, importe_maximo_ci, importe_maximo_movimientos_ci, importe_disponible_ci, spacer, pendiente_en_oc, recibido_en_oc, cantidad_en_oc, monto_recibido, monto_pendiente
+			, monto_cancelado, monto_total, unid_hosp, cod_art_mc_pk
+			, CAST(LEFT(CAST(partida as varchar), 1) + '000' AS INT) AS capitulo
+			, importe_disponible_contrato, vigencia_fin, min, presentacion, marca, precio, porcentaje, pedidos
+			
+				FROM (
+					SELECT c.cta_contable as partida, c.ejercicio as anio, c.num_licitacion, c.unidad as uh, c.unid_hosp_pk, c.proveedo_nom, c.cod_bar_mc_pr as codigo
+					, c.art_mc_nom as articulo, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada
+					,  max - consumido + ampliado - reservada + reasignada as disponible_contrato
+					, max + ampliado + reasignada as maximo_cm
+					, c.precio, porcentaje
+					, c.precio_ci
+					, c.precio_ci * c.max as importe_maximo_ci
+					, c.precio_ci * (c.max + c.reasignada + ampliado) as importe_maximo_movimientos_ci
+					, c.precio_ci * (max - consumido + ampliado - reservada + reasignada) as importe_disponible_ci
+					, space(10) as spacer
+					, sum(o.ped_pendiente / o.pza_pres) as pendiente_en_oc, sum(o.PED_RECIBIDO / o.pza_pres) as recibido_en_oc, SUM(O.CANTIDAD_PED) AS cantidad_en_oc
+					, sum(o.monto_recibido) as monto_recibido, sum(o.monto_pendiente) as monto_pendiente, sum(monto_cancelado) as monto_cancelado
+					,  sum(o.monto_recibido) + sum(o.monto_pendiente)  as monto_total
+					, c.unid_hosp, c.cod_art_mc_pk
+					, (c.precio_ci * (c.max + c.reasignada + ampliado)) -  (sum(ISNULL(o.monto_recibido, 0)) + sum(ISNULL(o.monto_pendiente,0))) as importe_disponible_contrato
+					, c.vigencia_fin, c.min, c.presentacion, c.marca, c.pedidos
+					FROM hcg_cgi.dbo.vContratos_adquisiciones_2 c
+					LEFT JOIN hcg_cgi.dbo.vOrdenes_compra_pedidosbzu o ON o.id_contrato_pk = c.contrato_pk AND o.num_uh = c.unid_hosp_pk AND c.cod_art_mc_pk = o.cod_art_mc_pk and o.año = c.ejercicio
+					WHERE 1 = 1 ${whereQuery}
+					GROUP BY c.precio_ci, c.cta_contable, c.ejercicio,c.num_licitacion, c.unidad, c.unid_hosp_pk, c.proveedo_nom, c.cod_art_mc_pk, c.cod_bar_mc_pr, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada, o.status_orden
+					, c.art_mc_nom, c.unid_hosp, c.cod_art_mc_pk, vigencia_fin, c.min, c.presentacion, c.marca, c.precio, c.porcentaje, c.pedidos
+				) o
+			GROUP BY partida, anio, num_licitacion, uh, unid_hosp_pk, proveedo_nom, codigo, articulo, max, ampliado, consumido, reasignada, reservada, disponible_contrato, maximo_cm, precio_ci
+			, importe_maximo_ci, importe_maximo_movimientos_ci, importe_disponible_ci, spacer, pendiente_en_oc, recibido_en_oc, cantidad_en_oc, monto_recibido, monto_pendiente
+			, monto_cancelado, monto_total, unid_hosp, cod_art_mc_pk, importe_disponible_contrato, vigencia_fin, min, presentacion, marca, precio, porcentaje, pedidos
+		`
+
+			// const queryString = `
+			// 	SELECT c.cta_contable as partida, c.ejercicio as anio, c.num_licitacion, c.unidad as uh, c.unid_hosp_pk, c.proveedo_nom, c.cod_bar_mc_pr as codigo
+			// 	, c.art_mc_nom as articulo, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada
+			// 	,  max - consumido + ampliado - reservada + reasignada as disponible_contrato
+			// 	, max + ampliado + reasignada as maximo_cm
+			// 	, c.precio_ci
+			// 	, c.precio_ci * c.max as importe_maximo_ci
+			// 	, c.precio_ci * (c.max + c.reasignada + ampliado) as importe_maximo_movimientos_ci
+			// 	, c.precio_ci * (max - consumido + ampliado - reservada + reasignada) as importe_disponible_ci
+			// 	, space(10) as spacer
+			// 	, sum(o.ped_pendiente) as pendiente_en_oc, sum(o.PED_RECIBIDO) as recibido_en_oc, SUM(O.CANTIDAD_PED) AS cantidad_en_oc
+			// 	, SUM(O.CANTIDAD_CONVERTIDA) AS cantidad_convertida_en_oc
+			// 	, CAST(o.pza_pres AS DECIMAL(12,2)) as factor_conversion
+			// 	, sum(o.monto_recibido) as monto_recibido, sum(o.monto_pendiente) as monto_pendiente, sum(monto_cancelado) as monto_cancelado
+			// 	,  sum(o.monto_recibido) + sum(o.monto_pendiente)  as monto_total
+			// 	, CAST(LEFT(CAST(c.cta_contable as varchar), 1) + '000' AS INT) AS capitulo
+			// 	, (c.precio_ci * (c.max + c.reasignada + ampliado)) -  (sum(o.monto_recibido) + sum(o.monto_pendiente)) as importe_disponible_contrato
+			// 	, c.presentacion, c.precio, c.marca, c.min, c.porcentaje
+			// 	FROM hcg_cgi.dbo.vContratos_adquisiciones_2 c
+			// 	INNER JOIN hcg_cgi.dbo.vOrdenes_compra_pedidosbzu o ON o.id_contrato_pk = c.contrato_pk AND o.num_uh = c.unid_hosp_pk AND c.cod_art_mc_pk = o.cod_art_mc_pk and o.año = c.ejercicio
+			// 	WHERE 1 = 1 ${whereQuery}
+			// 	GROUP BY c.precio_ci, c.cta_contable, c.ejercicio,c.num_licitacion, c.unidad, c.unid_hosp_pk, c.proveedo_nom, c.cod_art_mc_pk, c.cod_bar_mc_pr, c.max, c.ampliado, c.consumido, c.reasignada, c.reservada, o.status_orden
+			// 	, pza_pres, c.art_mc_nom
+			// 	, c.presentacion, c.precio, c.marca, c.min, c.porcentaje
+			// 	ORDER BY partida, c.num_licitacion, c.proveedo_nom, c.cod_art_mc_pk
+			// `
 
 			const replacements: any = {
 				ejercicio: body?.ejercicio || null,
