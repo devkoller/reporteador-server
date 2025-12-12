@@ -56,6 +56,30 @@ router.get(
 )
 
 router.get(
+	'/sufficiencesStatus',
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getSufficiencesStatus,
+		})
+	}
+)
+
+router.get(
+	'/unidHosp',
+	[auth.verifyToken],
+	(request: Request, response: Response) => {
+		callback({
+			request,
+			response,
+			callback: Data.getUnidHosp,
+		})
+	}
+)
+
+router.get(
 	'/order/licitaciones',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
@@ -139,7 +163,7 @@ router.post(
 	}
 )
 
-router.get(
+router.post(
 	'/sufficiencies',
 	[auth.verifyToken],
 	(request: Request, response: Response) => {
