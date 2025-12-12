@@ -40,6 +40,8 @@ class Data {
 		this.vOrdenes_compra = this.vOrdenes_compra.bind(this)
 		this.getOrderProveedores = this.getOrderProveedores.bind(this)
 		this.getContractsReport = this.getContractsReport.bind(this)
+		this.getUnidHosp = this.getUnidHosp.bind(this)
+		this.getSufficiencesStatus = this.getSufficiencesStatus.bind(this)
 	}
 
 	async getNumLicitacion({ query }: functionProps) {
@@ -136,6 +138,53 @@ class Data {
 		}
 	}
 
+	async getSufficiencesStatus({}: functionProps) {
+		try {
+			const queryString = `
+        SELECT 
+            id as value,
+            descrip as label
+        FROM hcg_cgi.dbo.PAD_PREC_STAT
+				UNION
+				SELECT 0 as value, 'TODOS' as label
+        ORDER BY id
+      `
+
+			const data = await DataService.read(queryString)
+
+			return {
+				status: 200,
+				message: 'Datas read successfully',
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
+
+	async getUnidHosp({ query }: functionProps) {
+		try {
+			const queryString = `
+        SELECT 
+				${query?.tipo === 'sufficiences' ? 'unid_hosp' : 'unid_hosp_pk'} as value,
+            corta as label
+        FROM hcg_cgi.dbo.pat_unid_hosp
+				UNION
+				SELECT '0' as value, 'TODAS' as label
+        ORDER BY value
+      `
+
+			const data = await DataService.read(queryString)
+
+			return {
+				status: 200,
+				message: 'Datas read successfully',
+				data,
+			}
+		} catch (error) {
+			throw new Error(error instanceof Error ? error.message : String(error))
+		}
+	}
 	async getCodArticulo({ query }: functionProps) {
 		try {
 			let whereQuery = ''
@@ -560,20 +609,95 @@ class Data {
 		}
 	}
 
-	async vSuficiencia({ query, params }: functionProps) {
+	async vSuficiencia({ body }: functionProps) {
+		const { cod_bar_mc_pr, ejercicio, unid_hosp, buscador, partida, status } =
+			body || {}
 		try {
+			let whereClause = ''
+
+			// Columns a buscar: si alguna es numérica, CAST a VARCHAR
+			const searchMap: Record<string, string> = {
+				cod_bar_mc_pr: 'cod_bar_mc_pr',
+				ejercicio: 'CAST(anio AS VARCHAR(4))',
+				unid_hosp: 'CAST(unid_hosp AS varchar)',
+				partida: 'CAST(partida as varchar(4))',
+				status: 'desc_stat',
+				concepto: 'concepto',
+				descrip: 'descrip',
+				// agrega más columnas aquí...
+			}
+			if (cod_bar_mc_pr) {
+				whereClause += ` AND cod_bar_mc_pr = :cod_bar_mc_pr`
+			}
+
+			if (ejercicio) {
+				whereClause += ` AND anio = :ejercicio`
+			}
+
+			if (partida) {
+				whereClause += ` AND partida = :partida`
+			}
+
+			if (unid_hosp) {
+				whereClause += ` AND unid_hosp = :unid_hosp`
+			}
+
+			if (unid_hosp) {
+				whereClause += ` AND unid_hosp = :unid_hosp`
+			}
+
+			if (status) {
+				whereClause += ` AND status = :status`
+			}
+
+			const replacements: { [key: string]: any } = {
+				cod_bar_mc_pr,
+				ejercicio,
+				partida,
+				unid_hosp,
+				status,
+			}
+
+			console.log('buscador', buscador)
+			// Normaliza y separa el buscador en palabras
+			const tokens = (buscador || '')
+				.trim()
+				.replace(/\s+/g, ' ')
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 6) // límite sano de palabras
+
+			if (tokens.length) {
+				// Por cada token, armamos (col1 LIKE :b0 OR col2 LIKE :b0 ...)
+				const groups: string[] = []
+
+				tokens.forEach((tok: string, i: number) => {
+					const likeKey = `b${i}`
+					// ORs por columna (collation para que sea case/accent-insensitive en SQL Server)
+					const ors = Object.values(searchMap).map(
+						(expr) => `${expr} COLLATE Latin1_General_CI_AI LIKE :${likeKey}`
+					)
+					groups.push(`(${ors.join(' OR ')})`)
+					// %token% en replacements
+					replacements[likeKey] = `%${tok}%`
+				})
+
+				// AND entre grupos para exigir que aparezcan todas las palabras
+				whereClause += ` AND ${groups.join(' AND ')}`
+			}
+
 			const queryString = `
         SELECT
-          TOP 25000
           *,
           CONVERT(VARCHAR(10), fech_alta, 103) as fech_alta,
           CONVERT(VARCHAR(10), fech_cier, 103) as fech_cier
          
         FROM vSuficiencia
+				WHERE 1=1 ${whereClause}
+				ORDER BY anio DESC
       `
 
-			const replacements = {}
-
+			console.log('whereClause', whereClause)
 			console.time('vSuficiencia')
 			const data = await DataService.read(queryString, replacements)
 			console.timeEnd('vSuficiencia')
