@@ -564,28 +564,33 @@ class Data {
 			let whereClause = ''
 
 			if (num_licitacion) {
-				whereClause += ` AND num_licitacion = :num_licitacion`
+				whereClause += ` AND o.num_licitacion = :num_licitacion`
 			}
 
 			if (cod_bar_mc_pr) {
-				whereClause += ` AND cod_bar_mc_pr = :cod_bar_mc_pr`
+				whereClause += ` AND o.cod_bar_mc_pr = :cod_bar_mc_pr`
 			}
 
 			if (ejercicio) {
-				whereClause += ` AND año = :ejercicio`
+				whereClause += ` AND o.año = :ejercicio`
 			}
 
 			if (proveedo_nom) {
-				whereClause += ` AND proveedo_nom = :proveedo_nom`
+				whereClause += ` AND o.proveedo_nom = :proveedo_nom`
 			}
 
 			const queryString = `
         SELECT 
-          *,
-          CONVERT(VARCHAR(10), fecha_envio, 103) as fecha_envio
-        FROM vOrdenes_compra
+        o.*
+        , CONVERT(VARCHAR(10), o.fecha_envio, 103) as fecha_envio
+				, CASE mc.catp_tipopro_pk WHEN 2 THEN pre.alm_presen_nom 
+				WHEN 1 THEN CASE WHEN ISNULL(mc.art_present_com, 0) > 0 THEN pre.alm_presen_nom ELSE f.formasfar_nom END ELSE '' END as presentacion
+        FROM vOrdenes_compra o
+				INNER JOIN hcg_produccion.dbo.alm_articulos_mc mc oN mc.cod_Art_mc_pk = o.cod_art_mc_pk	
+				LEFT OUTER JOIN hcg_produccion.dbo.alm_presentaciones pre ON mc.art_present_com = pre.alm_presen_pk
+				LEFT OUTER JOIN hcg_produccion.dbo.far_formasfar f ON f.formasfar_pk = mc.formasfar_pk
         where 1=1 ${whereClause}
-        ORDER BY año DESC
+        ORDER BY o.año DESC
       `
 
 			const replacements = {
@@ -688,11 +693,15 @@ class Data {
 
 			const queryString = `
         SELECT
-          *,
-          CONVERT(VARCHAR(10), fech_alta, 103) as fech_alta,
-          CONVERT(VARCHAR(10), fech_cier, 103) as fech_cier
-         
-        FROM vSuficiencia
+          s.*,
+          CONVERT(VARCHAR(10), s.fech_alta, 103) as fech_alta,
+          CONVERT(VARCHAR(10), s.fech_cier, 103) as fech_cier
+        , CASE mc.catp_tipopro_pk WHEN 2 THEN pre.alm_presen_nom 
+				WHEN 1 THEN CASE WHEN ISNULL(mc.art_present_com, 0) > 0 THEN pre.alm_presen_nom ELSE f.formasfar_nom END ELSE '' END as presentacion
+        FROM vSuficiencia s
+				INNER JOIN hcg_produccion.dbo.alm_articulos_mc mc oN mc.cod_Art_mc_pk = s.cod_art_mc_pk	
+				LEFT OUTER JOIN hcg_produccion.dbo.alm_presentaciones pre ON mc.art_present_com = pre.alm_presen_pk
+				LEFT OUTER JOIN hcg_produccion.dbo.far_formasfar f ON f.formasfar_pk = mc.formasfar_pk
 				WHERE 1=1 ${whereClause}
 				ORDER BY anio DESC
       `
