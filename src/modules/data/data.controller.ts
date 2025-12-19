@@ -580,12 +580,18 @@ class Data {
 			}
 
 			const queryString = `
-        SELECT 
-        o.*
-        , CONVERT(VARCHAR(10), o.fecha_envio, 103) as fecha_envio
+			
+        SELECT suministro_ord as mes_sumi, uh_corto as uh, partida, año as anio, num_licitacion, proveedo_nom, no_orden, CONVERT(varchar, fecha_envio, 103) AS fecha_envio, servicio_ped
+				, status_orden, subtotal_ord,iva_ord, total_ord,observaciones
+				, descripcion as articulo, ped_pendiente as pendiente_en_oc, ped_recibido as recibido_en_oc, cantidad_ped as cantidad_convertida_en_oc
+				, cantidad_orden as cantidad_en_oc, cantidad_cancelada
+				, CAST(pza_pres AS DECIMAL(10,2)) as factor_conversion, precio_si, iva, porciento_ieps, precio_ci, monto_recibido, monto_pendiente
+				, monto_cancelado, o.cod_bar_mc_pr as codigo, status_orden
+				, monto_recibido + monto_pendiente as monto_total
 				, CASE mc.catp_tipopro_pk WHEN 2 THEN pre.alm_presen_nom 
 				WHEN 1 THEN CASE WHEN ISNULL(mc.art_present_com, 0) > 0 THEN pre.alm_presen_nom ELSE f.formasfar_nom END ELSE '' END as presentacion
-        FROM vOrdenes_compra o
+				, CONVERT(varchar, fecha_limite, 103) AS fecha_limite, o.tiempo_entrega, o.cinco_al_millar
+        FROM vOrdenes_compra_pedidosbzu o
 				INNER JOIN hcg_produccion.dbo.alm_articulos_mc mc oN mc.cod_Art_mc_pk = o.cod_art_mc_pk	
 				LEFT OUTER JOIN hcg_produccion.dbo.alm_presentaciones pre ON mc.art_present_com = pre.alm_presen_pk
 				LEFT OUTER JOIN hcg_produccion.dbo.far_formasfar f ON f.formasfar_pk = mc.formasfar_pk
@@ -610,6 +616,7 @@ class Data {
 				data,
 			}
 		} catch (error) {
+			console.log('error', error)
 			throw new Error(error instanceof Error ? error.message : String(error))
 		}
 	}

@@ -1,6 +1,6 @@
-import { cgi } from "@/config"
+import { cgi } from '@/config'
 const _db = cgi.sequelize
-import { QueryTypes } from "sequelize"
+import { QueryTypes } from 'sequelize'
 
 class Data {
 	async read(query: string, replacements?: any) {
